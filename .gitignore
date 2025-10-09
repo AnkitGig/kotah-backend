@@ -1,0 +1,61 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.test
+.env.production
+.env.* 
+!.env.example
+
+# Logs
+logs/
+*.log
+debug.log
+pids/
+*.pid
+
+# Build / output
+dist/
+build/
+public/build/
+coverage/
+.nyc_output/
+coverage-*.json
+
+# Runtime data
+tmp/
+temp/
+uploads/
+data/
+data/db/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Caches
+.cache/
+.parcel-cache/
+.cache-loader/
+.turbo/
+
+# Misc
+.envrc
+.envrc.local
+*.local
+.eslintcache
