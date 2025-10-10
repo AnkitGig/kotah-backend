@@ -1,39 +1,30 @@
-name: Node.js CI/CD
-
+name: Node.js CI
+ 
 on:
   push:
-    branches: [main]  # deploy on main branch
-
+    branches: [ "main" ]
+ 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-
+  build:
+ 
+    runs-on: self-hosted
+ 
+    strategy:
+      matrix:
+        node-version: [22.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+ 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build project
-        run: npm run build   # if you have a build step
-
-      - name: Deploy to server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_KEY }}
-          port: 22
-          script: |
-            cd /home/deployer/new-repo
-            git pull origin main
-            npm install
-            pm2 stop all || true
-            pm2 start dist/server.js --name my-app
-            pm2 save
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm ci
+    - run: |
+          touch .env 
+          echo "${{ secrets.PROD_ENV_FILE }}" | tr -d '\r' > .env
+          chmod 600 .env  
+          ls -lah .env 
+    - run: pm2 restart server.js
