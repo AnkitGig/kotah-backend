@@ -12,6 +12,11 @@ const taskSchema = new mongoose.Schema(
       ref: "Child",
       required: true,
     },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      required: true,
+    },
     title: { type: String, required: true },
     description: { type: String },
     frequency: {

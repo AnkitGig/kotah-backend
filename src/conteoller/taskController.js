@@ -1,20 +1,33 @@
 const Task = require("../models/Task");
 const Child = require("../models/Child");
+const Category = require("../models/Category");
 
 exports.createTask = async (req, res) => {
   try {
     const parentId = req.user && req.user.userId;
     if (!parentId) return res.status(401).json({ message: "Unauthorized" });
-    const { childId, title, description, frequency, coinValue, dueTime } =
-      req.body || {};
-    if (!childId || !title)
-      return res.status(400).json({ message: "childId and title required" });
+    const {
+      childId,
+      title,
+      description,
+      frequency,
+      coinValue,
+      dueTime,
+      categoryId,
+    } = req.body || {};
+    if (!childId || !title || !categoryId)
+      return res
+        .status(400)
+        .json({ message: "childId, title and categoryId required" });
     const child = await Child.findOne({ _id: childId, parent: parentId });
     if (!child) return res.status(404).json({ message: "Child not found" });
-
+    const category = await Category.findById(categoryId);
+    if (!category)
+      return res.status(404).json({ message: "Category not found" });
     const task = new Task({
       parent: parentId,
       child: childId,
+      category: category._id,
       title,
       description,
       frequency,
@@ -22,7 +35,8 @@ exports.createTask = async (req, res) => {
       dueTime,
     });
     await task.save();
-    res.status(201).json(task);
+    const saved = await Task.findById(task._id).populate("child category");
+    res.status(201).json(saved);
   } catch (err) {
     console.error("createTask error", err);
     res.status(500).json({ message: "Server error" });
@@ -60,7 +74,7 @@ exports.verifyAndAward = async (req, res) => {
     if (!parentId) return res.status(401).json({ message: "Unauthorized" });
     const { taskId } = req.params;
     const task = await Task.findOne({ _id: taskId, parent: parentId }).populate(
-      "child"
+      "child category"
     );
     if (!task) return res.status(404).json({ message: "Task not found" });
     if (!task.completed)
@@ -71,8 +85,6 @@ exports.verifyAndAward = async (req, res) => {
       return res.status(400).json({ message: "Already verified" });
     task.verified = true;
     await task.save();
-
-    // award coins to child
     const child = await Child.findById(task.child._id);
     child.coins = (child.coins || 0) + (task.coinValue || 0);
     await child.save();
@@ -88,7 +100,9 @@ exports.listTasksForParent = async (req, res) => {
   try {
     const parentId = req.user && req.user.userId;
     if (!parentId) return res.status(401).json({ message: "Unauthorized" });
-    const tasks = await Task.find({ parent: parentId }).populate("child");
+    const tasks = await Task.find({ parent: parentId }).populate(
+      "child category"
+    );
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -103,7 +117,7 @@ exports.listTasksForChild = async (req, res) => {
         .status(401)
         .json({ message: "Unauthorized - child token required" });
     const childId = req.user.childId;
-    const tasks = await Task.find({ child: childId });
+    const tasks = await Task.find({ child: childId }).populate("category");
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
