@@ -2,6 +2,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const path = require("path");
+const { pathToFileURL } = require("url");
 const sendOtp = require("../utils/sendOtp");
 
 exports.login = async (req, res) => {
@@ -133,9 +134,42 @@ exports.completeProfile = async (req, res) => {
     }
 
     if (req.file) {
-      update.avatarUrl = path
-        .relative(process.cwd(), req.file.path)
-        .replace(/\\/g, "/");
+      try {
+        const existingUser = await User.findById(userId).select("avatarUrl");
+        const uploaderPath = path.join(
+          __dirname,
+          "..",
+          "utils",
+          "customUploader.js"
+        );
+        const uploaderModule = await import(pathToFileURL(uploaderPath).href);
+        const customUploader =
+          uploaderModule && uploaderModule.default
+            ? uploaderModule.default
+            : uploaderModule;
+
+        const uploadedUrl = await customUploader({
+          file: req.file,
+          oldUrl:
+            existingUser && existingUser.avatarUrl
+              ? existingUser.avatarUrl
+              : null,
+          folder: "uploads",
+        });
+
+        if (uploadedUrl) {
+          update.avatarUrl = uploadedUrl;
+        } else {
+          update.avatarUrl = path
+            .relative(process.cwd(), req.file.path)
+            .replace(/\\/g, "/");
+        }
+      } catch (e) {
+        console.error("Avatar upload error:", e);
+        update.avatarUrl = path
+          .relative(process.cwd(), req.file.path)
+          .replace(/\\/g, "/");
+      }
     }
 
     const user = await User.findByIdAndUpdate(
