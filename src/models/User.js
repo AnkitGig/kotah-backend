@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema(
     },
     locations: { type: [locationSchema], default: [] },
     avatarUrl: { type: String },
+  fcmToken: { type: String },
     isVerified: { type: Boolean, default: false },
     otpCode: { type: String },
     number: { type: String },

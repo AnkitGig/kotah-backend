@@ -6,14 +6,16 @@ const { pathToFileURL } = require("url");
 const sendOtp = require("../utils/sendOtp");
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, fcmToken } = req.body;
   try {
     const normalizedEmail = String(email || "")
       .toLowerCase()
       .trim();
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(400).json({ status: false, message: "Invalid email or password" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid email or password" });
     }
     if (!user.isVerified) {
       return res.status(403).json({
@@ -24,7 +26,9 @@ exports.login = async (req, res) => {
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ status: false, message: "Invalid email or password" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid email or password" });
     }
     const token = jwt.sign(
       { userId: user._id, role: user.role },
@@ -33,12 +37,22 @@ exports.login = async (req, res) => {
         expiresIn: "1d",
       }
     );
-  
+
     const profileComplete = Boolean(
       user.firstName &&
         user.lastName &&
         ((user.phone && user.phone.number) || user.number)
     );
+    try {
+      if (fcmToken) {
+        if (!user.fcmToken || String(user.fcmToken) !== String(fcmToken)) {
+          user.fcmToken = fcmToken;
+          await user.save();
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to save fcmToken for user", user._id, e);
+    }
 
     res.json({
       status: true,
@@ -49,6 +63,7 @@ exports.login = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        fcmToken: user.fcmToken || null,
         profileComplete,
       },
     });
@@ -59,7 +74,14 @@ exports.login = async (req, res) => {
 
 exports.signup = async (req, res) => {
   try {
-    const { firstName, lastName, email: rawEmail, password, countryCode, phone } = req.body || {};
+    const {
+      firstName,
+      lastName,
+      email: rawEmail,
+      password,
+      countryCode,
+      phone,
+    } = req.body || {};
     const email = String(rawEmail || "")
       .toLowerCase()
       .trim();
@@ -71,7 +93,9 @@ exports.signup = async (req, res) => {
 
     const existing = await User.findOne({ email });
     if (existing)
-      return res.status(400).json({ status: false, message: "User already exists" });
+      return res
+        .status(400)
+        .json({ status: false, message: "User already exists" });
 
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
@@ -84,7 +108,7 @@ exports.signup = async (req, res) => {
       otpCode: "0000",
       otpExpires: new Date(Date.now() + 10 * 60 * 1000),
       countryCode: countryCode,
-      phone: phone
+      phone: phone,
     });
     await user.save();
     try {
@@ -111,7 +135,9 @@ exports.signup = async (req, res) => {
   } catch (err) {
     console.error("signup error", err);
     if (err && err.code === 11000)
-      return res.status(400).json({ status: false, message: "Email already registered" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Email already registered" });
     res.status(500).json({ status: false, message: "Server error" });
   }
 };
@@ -119,14 +145,15 @@ exports.signup = async (req, res) => {
 exports.completeProfile = async (req, res) => {
   try {
     const userId = req.user && req.user.userId;
-  if (!userId) return res.status(401).json({ status: false, message: "Unauthorized" });
+    if (!userId)
+      return res.status(401).json({ status: false, message: "Unauthorized" });
 
     const body = req.body || {};
     const update = {};
 
     if (body.firstName) update.firstName = body.firstName;
     if (body.lastName) update.lastName = body.lastName;
-    if(body.number) update.number = body.number;
+    if (body.number) update.number = body.number;
     if (body.phone) {
       try {
         update.phone =
@@ -192,7 +219,8 @@ exports.completeProfile = async (req, res) => {
       { $set: update },
       { new: true }
     ).select("-password");
-    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+    if (!user)
+      return res.status(404).json({ status: false, message: "User not found" });
     res.json({ status: true, user });
   } catch (err) {
     console.error("completeProfile error", err);
@@ -207,10 +235,13 @@ exports.verifyOtp = async (req, res) => {
       .toLowerCase()
       .trim();
     if (!email || !code)
-      return res.status(400).json({ status: false, message: "Email and code are required" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Email and code are required" });
 
     const user = await User.findOne({ email });
-  if (!user) return res.status(404).json({ status: false, message: "User not found" });
+    if (!user)
+      return res.status(404).json({ status: false, message: "User not found" });
 
     if (!user.otpCode || !user.otpExpires)
       return res.status(400).json({ status: false, message: "No OTP pending" });
@@ -219,7 +250,9 @@ exports.verifyOtp = async (req, res) => {
       return res.status(400).json({ status: false, message: "OTP expired" });
 
     if (String(code) !== String(user.otpCode))
-      return res.status(400).json({ status: false, message: "Invalid OTP code" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid OTP code" });
 
     user.isVerified = true;
     user.otpCode = undefined;
@@ -227,7 +260,11 @@ exports.verifyOtp = async (req, res) => {
     user.otpVerified = true;
     await user.save();
 
-    res.json({ status: true, message: "Verified", user: { id: user._id, email: user.email, isVerified: user.isVerified } });
+    res.json({
+      status: true,
+      message: "Verified",
+      user: { id: user._id, email: user.email, isVerified: user.isVerified },
+    });
   } catch (err) {
     console.error("verifyOtp error", err);
     res.status(500).json({ status: false, message: "Server error" });
@@ -238,12 +275,17 @@ exports.verifyOtp = async (req, res) => {
 exports.verifyResetOtp = async (req, res) => {
   try {
     const { email: rawEmail, code } = req.body || {};
-    const email = String(rawEmail || "").toLowerCase().trim();
+    const email = String(rawEmail || "")
+      .toLowerCase()
+      .trim();
     if (!email || !code)
-      return res.status(400).json({ status: false, message: "Email and code are required" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Email and code are required" });
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+    if (!user)
+      return res.status(404).json({ status: false, message: "User not found" });
 
     if (!user.otpCode || !user.otpExpires)
       return res.status(400).json({ status: false, message: "No OTP pending" });
@@ -252,7 +294,9 @@ exports.verifyResetOtp = async (req, res) => {
       return res.status(400).json({ status: false, message: "OTP expired" });
 
     if (String(code) !== String(user.otpCode))
-      return res.status(400).json({ status: false, message: "Invalid OTP code" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid OTP code" });
 
     // Issue a short-lived reset token so client can call resetPassword without resubmitting the OTP
     const resetToken = jwt.sign(
@@ -271,7 +315,8 @@ exports.verifyResetOtp = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("-password");
-    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+    if (!user)
+      return res.status(404).json({ status: false, message: "User not found" });
     res.json({ status: true, user });
   } catch (err) {
     res.status(500).json({ status: false, message: "Server error" });
@@ -282,11 +327,17 @@ exports.getProfile = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email: rawEmail } = req.body || {};
-    const email = String(rawEmail || "").toLowerCase().trim();
-    if (!email) return res.status(400).json({ status: false, message: "Email is required" });
+    const email = String(rawEmail || "")
+      .toLowerCase()
+      .trim();
+    if (!email)
+      return res
+        .status(400)
+        .json({ status: false, message: "Email is required" });
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+    if (!user)
+      return res.status(404).json({ status: false, message: "User not found" });
 
     // Generate 6-digit numeric OTP
     const otp = String(Math.floor(100000 + Math.random() * 900000));
@@ -316,41 +367,74 @@ exports.resetPassword = async (req, res) => {
     const { email: rawEmail, code, newPassword, resetToken } = req.body || {};
 
     if (!newPassword)
-      return res.status(400).json({ status: false, message: "newPassword is required" });
+      return res
+        .status(400)
+        .json({ status: false, message: "newPassword is required" });
 
     let user = null;
 
     if (resetToken) {
       try {
-        const payload = jwt.verify(resetToken, process.env.JWT_SECRET || "dev-secret");
+        const payload = jwt.verify(
+          resetToken,
+          process.env.JWT_SECRET || "dev-secret"
+        );
         if (!payload || payload.purpose !== "password-reset" || !payload.email)
-          return res.status(400).json({ status: false, message: "Invalid reset token" });
+          return res
+            .status(400)
+            .json({ status: false, message: "Invalid reset token" });
         const tokenEmail = String(payload.email).toLowerCase().trim();
-        const providedEmail = String(rawEmail || "").toLowerCase().trim();
+        const providedEmail = String(rawEmail || "")
+          .toLowerCase()
+          .trim();
         if (providedEmail && tokenEmail !== providedEmail)
-          return res.status(400).json({ status: false, message: "Reset token does not match provided email" });
+          return res
+            .status(400)
+            .json({
+              status: false,
+              message: "Reset token does not match provided email",
+            });
         user = await User.findOne({ email: tokenEmail });
-        if (!user) return res.status(404).json({ status: false, message: "User not found" });
+        if (!user)
+          return res
+            .status(404)
+            .json({ status: false, message: "User not found" });
       } catch (e) {
-        return res.status(400).json({ status: false, message: "Invalid or expired reset token" });
+        return res
+          .status(400)
+          .json({ status: false, message: "Invalid or expired reset token" });
       }
     } else {
       // Flow B: fallback to email + code (legacy)
-      const email = String(rawEmail || "").toLowerCase().trim();
+      const email = String(rawEmail || "")
+        .toLowerCase()
+        .trim();
       if (!email || !code)
-        return res.status(400).json({ status: false, message: "Email, code and newPassword are required" });
+        return res
+          .status(400)
+          .json({
+            status: false,
+            message: "Email, code and newPassword are required",
+          });
 
       user = await User.findOne({ email });
-      if (!user) return res.status(404).json({ status: false, message: "User not found" });
+      if (!user)
+        return res
+          .status(404)
+          .json({ status: false, message: "User not found" });
 
       if (!user.otpCode || !user.otpExpires)
-        return res.status(400).json({ status: false, message: "No OTP pending" });
+        return res
+          .status(400)
+          .json({ status: false, message: "No OTP pending" });
 
       if (new Date() > new Date(user.otpExpires))
         return res.status(400).json({ status: false, message: "OTP expired" });
 
       if (String(code) !== String(user.otpCode))
-        return res.status(400).json({ status: false, message: "Invalid OTP code" });
+        return res
+          .status(400)
+          .json({ status: false, message: "Invalid OTP code" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -371,17 +455,27 @@ exports.resetPassword = async (req, res) => {
 exports.changePassword = async (req, res) => {
   try {
     const userId = req.user && req.user.userId;
-    if (!userId) return res.status(401).json({ status: false, message: "Unauthorized" });
+    if (!userId)
+      return res.status(401).json({ status: false, message: "Unauthorized" });
 
     const { currentPassword, newPassword } = req.body || {};
     if (!currentPassword || !newPassword)
-      return res.status(400).json({ status: false, message: "currentPassword and newPassword are required" });
+      return res
+        .status(400)
+        .json({
+          status: false,
+          message: "currentPassword and newPassword are required",
+        });
 
     const user = await User.findById(userId).select("+password");
-    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+    if (!user)
+      return res.status(404).json({ status: false, message: "User not found" });
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) return res.status(400).json({ status: false, message: "Current password is incorrect" });
+    if (!isMatch)
+      return res
+        .status(400)
+        .json({ status: false, message: "Current password is incorrect" });
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
