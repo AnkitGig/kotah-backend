@@ -13,6 +13,6 @@ router.post('/:taskId/verify', auth, taskController.verifyAndAward);
 
 // child routes
 router.get('/child', auth, taskController.listTasksForChild);
-router.post('/:taskId/complete', auth, taskController.markCompleteByChild);
+router.post('/complete', auth, taskController.markCompleteByChild);
 
 module.exports = router;

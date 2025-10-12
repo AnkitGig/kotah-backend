@@ -22,12 +22,10 @@ exports.createTask = async (req, res) => {
       difficulty,
     } = req.body || {};
     if (!childId || !title || !categoryId)
-      return res
-        .status(400)
-        .json({
-          status: false,
-          message: "childId, title and categoryId required",
-        });
+      return res.status(400).json({
+        status: false,
+        message: "childId, title and categoryId required",
+      });
     const child = await Child.findOne({ _id: childId, parent: parentId });
     if (!child)
       return res
@@ -111,8 +109,16 @@ exports.markCompleteByChild = async (req, res) => {
           status: false,
           message: "Unauthorized - child token required",
         });
+
     const childId = req.user.childId;
-    const { taskId } = req.params;
+    const taskId =
+      (req.body && req.body.taskId) || (req.params && req.params.taskId);
+
+    if (!taskId)
+      return res
+        .status(400)
+        .json({ status: false, message: "taskId is required in request body" });
+
     const task = await Task.findOne({ _id: taskId, child: childId });
     if (!task)
       return res.status(404).json({ status: false, message: "Task not found" });
@@ -120,6 +126,7 @@ exports.markCompleteByChild = async (req, res) => {
       return res
         .status(400)
         .json({ status: false, message: "Already completed" });
+
     task.completed = true;
     task.completedAt = new Date();
     await task.save();
@@ -181,12 +188,10 @@ exports.listTasksForChild = async (req, res) => {
   try {
     const childAuth = req.user && req.user.role === "child";
     if (!childAuth)
-      return res
-        .status(401)
-        .json({
-          status: false,
-          message: "Unauthorized - child token required",
-        });
+      return res.status(401).json({
+        status: false,
+        message: "Unauthorized - child token required",
+      });
     const childId = req.user.childId;
     const tasks = await Task.find({ child: childId }).populate("category");
     res.json({ status: true, data: tasks });
