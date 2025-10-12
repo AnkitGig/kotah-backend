@@ -10,7 +10,6 @@ const phoneSchema = new mongoose.Schema(
 
 const locationSchema = new mongoose.Schema(
   {
-    label: { type: String },
     address: { type: String },
     lat: { type: Number },
     lng: { type: Number },
