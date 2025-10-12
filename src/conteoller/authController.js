@@ -4,7 +4,6 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const { pathToFileURL } = require("url");
 const sendOtp = require("../utils/sendOtp");
-// using OTP flow for password resets (reuses otpCode/otpExpires on User)
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
@@ -235,6 +234,40 @@ exports.verifyOtp = async (req, res) => {
   }
 };
 
+// Verify OTP for password reset (separate from account verification)
+exports.verifyResetOtp = async (req, res) => {
+  try {
+    const { email: rawEmail, code } = req.body || {};
+    const email = String(rawEmail || "").toLowerCase().trim();
+    if (!email || !code)
+      return res.status(400).json({ status: false, message: "Email and code are required" });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+
+    if (!user.otpCode || !user.otpExpires)
+      return res.status(400).json({ status: false, message: "No OTP pending" });
+
+    if (new Date() > new Date(user.otpExpires))
+      return res.status(400).json({ status: false, message: "OTP expired" });
+
+    if (String(code) !== String(user.otpCode))
+      return res.status(400).json({ status: false, message: "Invalid OTP code" });
+
+    // Issue a short-lived reset token so client can call resetPassword without resubmitting the OTP
+    const resetToken = jwt.sign(
+      { email: user.email, purpose: "password-reset" },
+      process.env.JWT_SECRET || "dev-secret",
+      { expiresIn: "15m" }
+    );
+
+    res.json({ status: true, message: "OTP verified", resetToken });
+  } catch (err) {
+    console.error("verifyResetOtp error", err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("-password");
@@ -277,28 +310,52 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// Reset password using OTP
+// Reset password using either resetToken (preferred) or email+code (legacy)
 exports.resetPassword = async (req, res) => {
   try {
-    const { email: rawEmail, code, newPassword } = req.body || {};
-    const email = String(rawEmail || "").toLowerCase().trim();
-    if (!email || !code || !newPassword)
-      return res.status(400).json({ status: false, message: "Email, code and newPassword are required" });
+    const { email: rawEmail, code, newPassword, resetToken } = req.body || {};
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+    if (!newPassword)
+      return res.status(400).json({ status: false, message: "newPassword is required" });
 
-    if (!user.otpCode || !user.otpExpires)
-      return res.status(400).json({ status: false, message: "No OTP pending" });
+    let user = null;
 
-    if (new Date() > new Date(user.otpExpires))
-      return res.status(400).json({ status: false, message: "OTP expired" });
+    if (resetToken) {
+      try {
+        const payload = jwt.verify(resetToken, process.env.JWT_SECRET || "dev-secret");
+        if (!payload || payload.purpose !== "password-reset" || !payload.email)
+          return res.status(400).json({ status: false, message: "Invalid reset token" });
+        const tokenEmail = String(payload.email).toLowerCase().trim();
+        const providedEmail = String(rawEmail || "").toLowerCase().trim();
+        if (providedEmail && tokenEmail !== providedEmail)
+          return res.status(400).json({ status: false, message: "Reset token does not match provided email" });
+        user = await User.findOne({ email: tokenEmail });
+        if (!user) return res.status(404).json({ status: false, message: "User not found" });
+      } catch (e) {
+        return res.status(400).json({ status: false, message: "Invalid or expired reset token" });
+      }
+    } else {
+      // Flow B: fallback to email + code (legacy)
+      const email = String(rawEmail || "").toLowerCase().trim();
+      if (!email || !code)
+        return res.status(400).json({ status: false, message: "Email, code and newPassword are required" });
 
-    if (String(code) !== String(user.otpCode))
-      return res.status(400).json({ status: false, message: "Invalid OTP code" });
+      user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ status: false, message: "User not found" });
+
+      if (!user.otpCode || !user.otpExpires)
+        return res.status(400).json({ status: false, message: "No OTP pending" });
+
+      if (new Date() > new Date(user.otpExpires))
+        return res.status(400).json({ status: false, message: "OTP expired" });
+
+      if (String(code) !== String(user.otpCode))
+        return res.status(400).json({ status: false, message: "Invalid OTP code" });
+    }
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
+    // Clear OTP state
     user.otpCode = undefined;
     user.otpExpires = undefined;
     await user.save();
