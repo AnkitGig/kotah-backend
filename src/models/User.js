@@ -42,6 +42,7 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String },
     isVerified: { type: Boolean, default: false },
     otpCode: { type: String },
+    number: { type: String },
     otpExpires: { type: Date },
     otpVerified: { type: Boolean, default: false },
     role: { type: String, enum: ["user", "admin"], default: "user" },

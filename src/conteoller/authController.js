@@ -115,6 +115,7 @@ exports.completeProfile = async (req, res) => {
 
     if (body.firstName) update.firstName = body.firstName;
     if (body.lastName) update.lastName = body.lastName;
+    if(body.number) update.number = body.number;
     if (body.phone) {
       try {
         update.phone =
