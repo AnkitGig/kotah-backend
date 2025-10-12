@@ -1,12 +1,13 @@
 const Task = require("../models/Task");
 const Child = require("../models/Child");
 const Category = require("../models/Category");
-const path = require('path');
+const path = require("path");
 
 exports.createTask = async (req, res) => {
   try {
-  const parentId = req.user && req.user.userId;
-  if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
+    const parentId = req.user && req.user.userId;
+    if (!parentId)
+      return res.status(401).json({ status: false, message: "Unauthorized" });
     const {
       childId,
       title,
@@ -23,12 +24,20 @@ exports.createTask = async (req, res) => {
     if (!childId || !title || !categoryId)
       return res
         .status(400)
-        .json({ status: false, message: "childId, title and categoryId required" });
+        .json({
+          status: false,
+          message: "childId, title and categoryId required",
+        });
     const child = await Child.findOne({ _id: childId, parent: parentId });
-  if (!child) return res.status(404).json({ status: false, message: "Child not found" });
+    if (!child)
+      return res
+        .status(404)
+        .json({ status: false, message: "Child not found" });
     const category = await Category.findById(categoryId);
     if (!category)
-      return res.status(404).json({ status: false, message: "Category not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "Category not found" });
     const task = new Task({
       parent: parentId,
       child: childId,
@@ -38,36 +47,53 @@ exports.createTask = async (req, res) => {
       frequency,
       coinValue: coinValue || 0,
       dueTime,
-      // normalize boolean-like values that may come as strings
-      requiresParentApproval: (typeof requiresParentApproval === 'string')
-        ? ['1','true','yes'].includes(requiresParentApproval.toLowerCase())
-        : !!requiresParentApproval,
-      allowNextDayCompletion: (typeof allowNextDayCompletion === 'string')
-        ? ['1','true','yes'].includes(allowNextDayCompletion.toLowerCase())
-        : !!allowNextDayCompletion,
-      difficulty: difficulty || 'easy',
+      requiresParentApproval:
+        typeof requiresParentApproval === "string"
+          ? ["1", "true", "yes"].includes(requiresParentApproval.toLowerCase())
+          : !!requiresParentApproval,
+      allowNextDayCompletion:
+        typeof allowNextDayCompletion === "string"
+          ? ["1", "true", "yes"].includes(allowNextDayCompletion.toLowerCase())
+          : !!allowNextDayCompletion,
+      difficulty: difficulty || "easy",
       timeOfDay: Array.isArray(timeOfDay)
         ? timeOfDay
-        : (timeOfDay ? String(timeOfDay).split(',').map(s => s.trim()).filter(Boolean) : undefined),
+        : timeOfDay
+        ? String(timeOfDay)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined,
     });
 
     // handle optional image upload (req.file)
     if (req.file) {
       try {
-        const uploaderPath = path.join(__dirname, '..', 'utils', 'customUploader.js');
-        const uploaderModule = await import(uploaderPath);
-        const customUploader = uploaderModule.default || uploaderModule;
-        const uploadedUrl = await customUploader({ file: req.file, folder: 'tasks' });
+        const uploaderPath = path.join(
+          __dirname,
+          "..",
+          "utils",
+          "customUploader.js"
+        );
+        const uploaderModule = require(uploaderPath);
+        const customUploader =
+          uploaderModule && uploaderModule.default
+            ? uploaderModule.default
+            : uploaderModule;
+        const uploadedUrl = await customUploader({
+          file: req.file,
+          folder: "tasks",
+        });
         if (uploadedUrl) task.imageUrl = uploadedUrl;
-        else task.imageUrl = req.file.path.replace(/\\/g, '/');
+        else task.imageUrl = req.file.path.replace(/\\/g, "/");
       } catch (e) {
-        console.error('task image upload error', e);
+        console.error("task image upload error", e);
       }
     }
 
     await task.save();
     const saved = await Task.findById(task._id).populate("child category");
-  res.status(201).json({ status: true, data: saved });
+    res.status(201).json({ status: true, data: saved });
   } catch (err) {
     console.error("createTask error", err);
     res.status(500).json({ status: false, message: "Server error" });
@@ -81,13 +107,19 @@ exports.markCompleteByChild = async (req, res) => {
     if (!childAuth)
       return res
         .status(401)
-        .json({ status: false, message: "Unauthorized - child token required" });
+        .json({
+          status: false,
+          message: "Unauthorized - child token required",
+        });
     const childId = req.user.childId;
     const { taskId } = req.params;
     const task = await Task.findOne({ _id: taskId, child: childId });
-    if (!task) return res.status(404).json({ status: false, message: "Task not found" });
+    if (!task)
+      return res.status(404).json({ status: false, message: "Task not found" });
     if (task.completed)
-      return res.status(400).json({ status: false, message: "Already completed" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Already completed" });
     task.completed = true;
     task.completedAt = new Date();
     await task.save();
@@ -101,19 +133,23 @@ exports.markCompleteByChild = async (req, res) => {
 // parent verifies completion and awards coins
 exports.verifyAndAward = async (req, res) => {
   try {
-  const parentId = req.user && req.user.userId;
-  if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
+    const parentId = req.user && req.user.userId;
+    if (!parentId)
+      return res.status(401).json({ status: false, message: "Unauthorized" });
     const { taskId } = req.params;
     const task = await Task.findOne({ _id: taskId, parent: parentId }).populate(
       "child category"
     );
-    if (!task) return res.status(404).json({ status: false, message: "Task not found" });
+    if (!task)
+      return res.status(404).json({ status: false, message: "Task not found" });
     if (!task.completed)
       return res
         .status(400)
         .json({ status: false, message: "Task not marked completed by child" });
     if (task.verified)
-      return res.status(400).json({ status: false, message: "Already verified" });
+      return res
+        .status(400)
+        .json({ status: false, message: "Already verified" });
     task.verified = true;
     await task.save();
     const child = await Child.findById(task.child._id);
@@ -130,7 +166,8 @@ exports.verifyAndAward = async (req, res) => {
 exports.listTasksForParent = async (req, res) => {
   try {
     const parentId = req.user && req.user.userId;
-    if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
+    if (!parentId)
+      return res.status(401).json({ status: false, message: "Unauthorized" });
     const tasks = await Task.find({ parent: parentId }).populate(
       "child category"
     );
@@ -146,7 +183,10 @@ exports.listTasksForChild = async (req, res) => {
     if (!childAuth)
       return res
         .status(401)
-        .json({ status: false, message: "Unauthorized - child token required" });
+        .json({
+          status: false,
+          message: "Unauthorized - child token required",
+        });
     const childId = req.user.childId;
     const tasks = await Task.find({ child: childId }).populate("category");
     res.json({ status: true, data: tasks });
