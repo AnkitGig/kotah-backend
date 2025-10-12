@@ -1,6 +1,7 @@
 const Task = require("../models/Task");
 const Child = require("../models/Child");
 const Category = require("../models/Category");
+const path = require('path');
 
 exports.createTask = async (req, res) => {
   try {
@@ -14,6 +15,10 @@ exports.createTask = async (req, res) => {
       coinValue,
       dueTime,
       categoryId,
+      timeOfDay,
+      requiresParentApproval,
+      allowNextDayCompletion,
+      difficulty,
     } = req.body || {};
     if (!childId || !title || !categoryId)
       return res
@@ -33,7 +38,33 @@ exports.createTask = async (req, res) => {
       frequency,
       coinValue: coinValue || 0,
       dueTime,
+      // normalize boolean-like values that may come as strings
+      requiresParentApproval: (typeof requiresParentApproval === 'string')
+        ? ['1','true','yes'].includes(requiresParentApproval.toLowerCase())
+        : !!requiresParentApproval,
+      allowNextDayCompletion: (typeof allowNextDayCompletion === 'string')
+        ? ['1','true','yes'].includes(allowNextDayCompletion.toLowerCase())
+        : !!allowNextDayCompletion,
+      difficulty: difficulty || 'easy',
+      timeOfDay: Array.isArray(timeOfDay)
+        ? timeOfDay
+        : (timeOfDay ? String(timeOfDay).split(',').map(s => s.trim()).filter(Boolean) : undefined),
     });
+
+    // handle optional image upload (req.file)
+    if (req.file) {
+      try {
+        const uploaderPath = path.join(__dirname, '..', 'utils', 'customUploader.js');
+        const uploaderModule = await import(uploaderPath);
+        const customUploader = uploaderModule.default || uploaderModule;
+        const uploadedUrl = await customUploader({ file: req.file, folder: 'tasks' });
+        if (uploadedUrl) task.imageUrl = uploadedUrl;
+        else task.imageUrl = req.file.path.replace(/\\/g, '/');
+      } catch (e) {
+        console.error('task image upload error', e);
+      }
+    }
+
     await task.save();
     const saved = await Task.findById(task._id).populate("child category");
   res.status(201).json({ status: true, data: saved });
