@@ -4,8 +4,8 @@ const Category = require("../models/Category");
 
 exports.createTask = async (req, res) => {
   try {
-    const parentId = req.user && req.user.userId;
-    if (!parentId) return res.status(401).json({ message: "Unauthorized" });
+  const parentId = req.user && req.user.userId;
+  if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
     const {
       childId,
       title,
@@ -18,12 +18,12 @@ exports.createTask = async (req, res) => {
     if (!childId || !title || !categoryId)
       return res
         .status(400)
-        .json({ message: "childId, title and categoryId required" });
+        .json({ status: false, message: "childId, title and categoryId required" });
     const child = await Child.findOne({ _id: childId, parent: parentId });
-    if (!child) return res.status(404).json({ message: "Child not found" });
+  if (!child) return res.status(404).json({ status: false, message: "Child not found" });
     const category = await Category.findById(categoryId);
     if (!category)
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(404).json({ status: false, message: "Category not found" });
     const task = new Task({
       parent: parentId,
       child: childId,
@@ -36,10 +36,10 @@ exports.createTask = async (req, res) => {
     });
     await task.save();
     const saved = await Task.findById(task._id).populate("child category");
-    res.status(201).json(saved);
+  res.status(201).json({ status: true, data: saved });
   } catch (err) {
     console.error("createTask error", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
@@ -50,62 +50,62 @@ exports.markCompleteByChild = async (req, res) => {
     if (!childAuth)
       return res
         .status(401)
-        .json({ message: "Unauthorized - child token required" });
+        .json({ status: false, message: "Unauthorized - child token required" });
     const childId = req.user.childId;
     const { taskId } = req.params;
     const task = await Task.findOne({ _id: taskId, child: childId });
-    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (!task) return res.status(404).json({ status: false, message: "Task not found" });
     if (task.completed)
-      return res.status(400).json({ message: "Already completed" });
+      return res.status(400).json({ status: false, message: "Already completed" });
     task.completed = true;
     task.completedAt = new Date();
     await task.save();
-    res.json(task);
+    res.json({ status: true, data: task });
   } catch (err) {
     console.error("markCompleteByChild error", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
 // parent verifies completion and awards coins
 exports.verifyAndAward = async (req, res) => {
   try {
-    const parentId = req.user && req.user.userId;
-    if (!parentId) return res.status(401).json({ message: "Unauthorized" });
+  const parentId = req.user && req.user.userId;
+  if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
     const { taskId } = req.params;
     const task = await Task.findOne({ _id: taskId, parent: parentId }).populate(
       "child category"
     );
-    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (!task) return res.status(404).json({ status: false, message: "Task not found" });
     if (!task.completed)
       return res
         .status(400)
-        .json({ message: "Task not marked completed by child" });
+        .json({ status: false, message: "Task not marked completed by child" });
     if (task.verified)
-      return res.status(400).json({ message: "Already verified" });
+      return res.status(400).json({ status: false, message: "Already verified" });
     task.verified = true;
     await task.save();
     const child = await Child.findById(task.child._id);
     child.coins = (child.coins || 0) + (task.coinValue || 0);
     await child.save();
 
-    res.json({ task, child });
+    res.json({ status: true, task, child });
   } catch (err) {
     console.error("verifyAndAward error", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
 exports.listTasksForParent = async (req, res) => {
   try {
     const parentId = req.user && req.user.userId;
-    if (!parentId) return res.status(401).json({ message: "Unauthorized" });
+    if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
     const tasks = await Task.find({ parent: parentId }).populate(
       "child category"
     );
-    res.json(tasks);
+    res.json({ status: true, data: tasks });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
@@ -115,11 +115,11 @@ exports.listTasksForChild = async (req, res) => {
     if (!childAuth)
       return res
         .status(401)
-        .json({ message: "Unauthorized - child token required" });
+        .json({ status: false, message: "Unauthorized - child token required" });
     const childId = req.user.childId;
     const tasks = await Task.find({ child: childId }).populate("category");
-    res.json(tasks);
+    res.json({ status: true, data: tasks });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };

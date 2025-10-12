@@ -36,11 +36,11 @@ function generate6Digit(type = "alnum") {
 
 exports.createChild = async (req, res) => {
   try {
-    const parentId = req.user && req.user.userId;
-    if (!parentId) return res.status(401).json({ message: "Unauthorized" });
+  const parentId = req.user && req.user.userId;
+  if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
 
     const { name, age } = req.body || {};
-    if (!name) return res.status(400).json({ message: "Child name required" });
+  if (!name) return res.status(400).json({ status: false, message: "Child name required" });
     const codeType = (req.body && req.body.codeType) || "alnum";
     const allowed = ["numeric", "alpha", "alnum"];
     const normalizedType = allowed.includes(codeType) ? codeType : "alnum";
@@ -53,7 +53,7 @@ exports.createChild = async (req, res) => {
       code = null;
     }
     if (!code)
-      return res.status(500).json({ message: "Could not generate code" });
+      return res.status(500).json({ status: false, message: "Could not generate code" });
 
     let avatarUrl = null;
     if (req.file) {
@@ -71,51 +71,42 @@ exports.createChild = async (req, res) => {
 
     const child = new Child({ parent: parentId, name, age, code, avatarUrl });
     await child.save();
-    res.status(201).json(child);
+    res.status(201).json({ status: true, data: child });
   } catch (err) {
     console.error("createChild error", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
 exports.childLogin = async (req, res) => {
   try {
     const { code } = req.body || {};
-    if (!code) return res.status(400).json({ message: "Code required" });
+    if (!code) return res.status(400).json({ status: false, message: "Code required" });
     const child = await Child.findOne({ code }).populate(
       "parent",
       "firstName lastName email"
     );
-    if (!child) return res.status(404).json({ message: "Child not found" });
+    if (!child) return res.status(404).json({ status: false, message: "Child not found" });
 
     const token = jwt.sign(
       { childId: child._id, parentId: child.parent._id, role: "child" },
       process.env.JWT_SECRET || "dev-secret",
       { expiresIn: "7d" }
     );
-    res.json({
-      token,
-      child: {
-        id: child._id,
-        name: child.name,
-        age: child.age,
-        coins: child.coins,
-        parent: child.parent,
-      },
-    });
+    res.json({ status: true, token, child: { id: child._id, name: child.name, age: child.age, coins: child.coins, parent: child.parent } });
   } catch (err) {
     console.error("childLogin error", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
 exports.listChildren = async (req, res) => {
   try {
     const parentId = req.user && req.user.userId;
-    if (!parentId) return res.status(401).json({ message: "Unauthorized" });
+    if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
     const children = await Child.find({ parent: parentId }).select("-__v");
-    res.json(children);
+    res.json({ status: true, data: children });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };

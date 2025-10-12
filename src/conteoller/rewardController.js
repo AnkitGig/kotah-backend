@@ -3,12 +3,12 @@ const Child = require("../models/Child");
 
 exports.listRewards = async (req, res) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Unauthorized" });
+  const user = req.user;
+  if (!user) return res.status(401).json({ status: false, message: "Unauthorized" });
     if (user.role === "child") {
       const childId = user.childId;
       if (!childId)
-        return res.status(400).json({ message: "Child id missing in token" });
+        return res.status(400).json({ status: false, message: "Child id missing in token" });
       const rewards = await Reward.find({
         active: true,
         $or: [
@@ -17,11 +17,11 @@ exports.listRewards = async (req, res) => {
           { targetChildren: childId },
         ],
       });
-      return res.json(rewards);
+  return res.json({ status: true, data: rewards });
     }
 
     const parentId = user.userId;
-    if (!parentId) return res.status(401).json({ message: "Unauthorized" });
+  if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
 
     const filterChildId = req.query && req.query.childId;
     if (filterChildId) {
@@ -32,7 +32,7 @@ exports.listRewards = async (req, res) => {
       if (!child)
         return res
           .status(404)
-          .json({ message: "Child not found or not owned by you" });
+          .json({ status: false, message: "Child not found or not owned by you" });
       const rewards = await Reward.find({
         active: true,
         $or: [
@@ -41,7 +41,7 @@ exports.listRewards = async (req, res) => {
           { targetChildren: child._id },
         ],
       });
-      return res.json(rewards);
+      return res.json({ status: true, data: rewards });
     }
 
     // find all children of this parent
@@ -55,9 +55,9 @@ exports.listRewards = async (req, res) => {
     if (childIds.length) orClauses.push({ targetChildren: { $in: childIds } });
 
     const rewards = await Reward.find({ active: true, $or: orClauses });
-    res.json(rewards);
+    res.json({ status: true, data: rewards });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
@@ -66,7 +66,7 @@ exports.createReward = async (req, res) => {
     const { title, description, cost, type, metadata, targetChildren } =
       req.body || {};
     if (!title || !cost)
-      return res.status(400).json({ message: "title and cost required" });
+      return res.status(400).json({ status: false, message: "title and cost required" });
     const rewardData = { title, description, cost, type, metadata };
     if (targetChildren) {
       let ids = [];
@@ -103,9 +103,9 @@ exports.createReward = async (req, res) => {
     }
     const reward = new Reward(rewardData);
     await reward.save();
-    res.status(201).json(reward);
+    res.status(201).json({ status: true, data: reward });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
@@ -116,12 +116,12 @@ exports.claimReward = async (req, res) => {
     if (!childAuth)
       return res
         .status(401)
-        .json({ message: "Unauthorized - child token required" });
+        .json({ status: false, message: "Unauthorized - child token required" });
     const childId = req.user.childId;
     const { rewardId } = req.params;
     const reward = await Reward.findById(rewardId);
     if (!reward || !reward.active)
-      return res.status(404).json({ message: "Reward not found" });
+      return res.status(404).json({ status: false, message: "Reward not found" });
     const targets = reward.targetChildren || [];
     if (Array.isArray(targets) && targets.length > 0) {
       // compare ids as strings
@@ -129,18 +129,18 @@ exports.claimReward = async (req, res) => {
       if (!allowed.includes(String(childId))) {
         return res
           .status(403)
-          .json({ message: "Reward not available for this child" });
+          .json({ status: false, message: "Reward not available for this child" });
       }
     }
     const child = await Child.findById(childId);
-    if (!child) return res.status(404).json({ message: "Child not found" });
+    if (!child) return res.status(404).json({ status: false, message: "Child not found" });
     if ((child.coins || 0) < reward.cost)
-      return res.status(400).json({ message: "Not enough coins" });
+      return res.status(400).json({ status: false, message: "Not enough coins" });
     child.coins -= reward.cost;
     await child.save();
-    res.json({ message: "Reward claimed", reward, child });
+    res.json({ status: true, message: "Reward claimed", reward, child });
   } catch (err) {
     console.error("claimReward error", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
