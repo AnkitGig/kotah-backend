@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const { pathToFileURL } = require("url");
 const sendOtp = require("../utils/sendOtp");
+// using OTP flow for password resets (reuses otpCode/otpExpires on User)
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
@@ -238,6 +239,98 @@ exports.getProfile = async (req, res) => {
     if (!user) return res.status(404).json({ status: false, message: "User not found" });
     res.json({ status: true, user });
   } catch (err) {
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+// Request a password reset using OTP. Generates an OTP and sets expiry on the user.
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email: rawEmail } = req.body || {};
+    const email = String(rawEmail || "").toLowerCase().trim();
+    if (!email) return res.status(400).json({ status: false, message: "Email is required" });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+
+    // Generate 6-digit numeric OTP
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    user.otpCode = otp;
+    // 10 minutes expiry
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    // Send OTP (best-effort)
+    try {
+      await sendOtp(user.phone || user.email, user.otpCode);
+    } catch (e) {
+      console.warn("forgotPassword: notify failed", e);
+    }
+
+    // Do not return OTP in production responses
+    res.json({ status: true, message: "Password reset OTP sent" });
+  } catch (err) {
+    console.error("forgotPassword error", err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+// Reset password using OTP
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email: rawEmail, code, newPassword } = req.body || {};
+    const email = String(rawEmail || "").toLowerCase().trim();
+    if (!email || !code || !newPassword)
+      return res.status(400).json({ status: false, message: "Email, code and newPassword are required" });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+
+    if (!user.otpCode || !user.otpExpires)
+      return res.status(400).json({ status: false, message: "No OTP pending" });
+
+    if (new Date() > new Date(user.otpExpires))
+      return res.status(400).json({ status: false, message: "OTP expired" });
+
+    if (String(code) !== String(user.otpCode))
+      return res.status(400).json({ status: false, message: "Invalid OTP code" });
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    user.otpCode = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({ status: true, message: "Password has been reset" });
+  } catch (err) {
+    console.error("resetPassword error", err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+// Change password for authenticated user
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user && req.user.userId;
+    if (!userId) return res.status(401).json({ status: false, message: "Unauthorized" });
+
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword)
+      return res.status(400).json({ status: false, message: "currentPassword and newPassword are required" });
+
+    const user = await User.findById(userId).select("+password");
+    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ status: false, message: "Current password is incorrect" });
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.json({ status: true, message: "Password changed successfully" });
+  } catch (err) {
+    console.error("changePassword error", err);
     res.status(500).json({ status: false, message: "Server error" });
   }
 };

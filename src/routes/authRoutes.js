@@ -7,11 +7,15 @@ const { upload } = require("../middleware/multer");
 router.post("/login", authController.login);
 router.post("/signup", authController.signup);
 router.post("/verify-otp", authController.verifyOtp);
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password", authController.resetPassword);
+router.post("/change-password", auth, authController.changePassword);
 router.post(
   "/complete-profile",
   auth,
   upload.single("avatar"),
   authController.completeProfile
 );
+
 
 module.exports = router;
