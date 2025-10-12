@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Kotah Chat Client</title>
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; max-width: 900px; margin: 20px auto; }
+      #messages { border: 1px solid #ccc; height: 300px; overflow: auto; padding: 8px; background: #fafafa }
+      .msg { margin: 6px 0; padding: 6px; border-radius: 4px }
+      .msg.parent { background: #e6f7ff }
+      .msg.child { background: #fff7e6 }
+      label { display:block; margin-top:8px }
+      input[type=text], textarea { width: 100% }
+    </style>
+  </head>
+  <body>
+    <h2>Kotah Chat Client</h2>
+
+    <label>Server URL
+      <input id="serverUrl" type="text" value="http://localhost:5000" />
+    </label>
+
+    <label>JWT Token (from login / child login)
+      <input id="token" type="text" placeholder="JWT token" />
+    </label>
+
+    <label>Parent ID
+      <input id="parentId" type="text" placeholder="Parent ObjectId" />
+    </label>
+
+    <label>Child ID
+      <input id="childId" type="text" placeholder="Child ObjectId" />
+    </label>
+
+    <button id="connectBtn">Connect</button>
+    <button id="historyBtn">Load History</button>
+    <div id="status"></div>
+
+    <h3>Messages</h3>
+    <div id="messages"></div>
+
+    <label>Message
+      <textarea id="messageInput" rows="3"></textarea>
+    </label>
+    <button id="sendBtn">Send</button>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+      let socket;
+      const statusEl = document.getElementById('status');
+      const messagesEl = document.getElementById('messages');
+
+      function logStatus(txt) { statusEl.textContent = txt }
+      function addMessage(m) {
+        const d = document.createElement('div');
+        d.className = 'msg ' + (m.senderRole === 'parent' ? 'parent' : 'child');
+        d.innerHTML = `<strong>${m.senderRole}</strong>: ${m.content} <div style="font-size:0.8em;color:#666">${new Date(m.createdAt || Date.now()).toLocaleString()}</div>`;
+        messagesEl.appendChild(d);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      document.getElementById('connectBtn').addEventListener('click', () => {
+        const url = document.getElementById('serverUrl').value.trim();
+        const token = document.getElementById('token').value.trim();
+        if (!token) return alert('Enter token');
+        if (socket && socket.connected) socket.disconnect();
+
+        socket = io(url, { auth: { token } });
+
+        socket.on('connect', () => {
+          logStatus('connected: ' + socket.id);
+        });
+        socket.on('connect_error', (err) => { logStatus('connect_error: ' + (err && err.message)); });
+        socket.on('message', (m) => { addMessage(m); });
+        socket.on('message_read', (r) => { console.log('read', r); });
+      });
+
+      document.getElementById('sendBtn').addEventListener('click', () => {
+        if (!socket || !socket.connected) return alert('Not connected');
+        const p = document.getElementById('parentId').value.trim();
+        const c = document.getElementById('childId').value.trim();
+        const content = document.getElementById('messageInput').value.trim();
+        if (!p || !c || !content) return alert('parentId, childId and content required');
+        socket.emit('send_message', { parentId: p, childId: c, content }, (ack) => {
+          if (ack && ack.status) {
+            addMessage({ senderRole: 'you', content });
+            document.getElementById('messageInput').value = '';
+          } else {
+            alert('send failed: ' + JSON.stringify(ack));
+          }
+        });
+      });
+
+      document.getElementById('historyBtn').addEventListener('click', () => {
+        if (!socket || !socket.connected) return alert('Not connected');
+        const p = document.getElementById('parentId').value.trim();
+        const c = document.getElementById('childId').value.trim();
+        socket.emit('get_history', { parentId: p, childId: c, limit: 100 }, (res) => {
+          if (res && res.status) {
+            messagesEl.innerHTML = '';
+            (res.data || []).forEach(addMessage);
+          } else alert('history failed: ' + JSON.stringify(res));
+        });
+      });
+    </script>
+  </body>
+</html>
