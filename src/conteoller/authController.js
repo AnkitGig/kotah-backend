@@ -60,7 +60,7 @@ exports.login = async (req, res) => {
 
 exports.signup = async (req, res) => {
   try {
-    const { firstName, lastName, email: rawEmail, password } = req.body || {};
+    const { firstName, lastName, email: rawEmail, password, countryCode, phone } = req.body || {};
     const email = String(rawEmail || "")
       .toLowerCase()
       .trim();
@@ -84,6 +84,8 @@ exports.signup = async (req, res) => {
       password: hashed,
       otpCode: "0000",
       otpExpires: new Date(Date.now() + 10 * 60 * 1000),
+      countryCode: countryCode,
+      phone: phone
     });
     await user.save();
     try {
