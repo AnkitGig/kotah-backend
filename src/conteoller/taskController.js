@@ -103,12 +103,10 @@ exports.markCompleteByChild = async (req, res) => {
   try {
     const childAuth = req.user && req.user.role === "child";
     if (!childAuth)
-      return res
-        .status(401)
-        .json({
-          status: false,
-          message: "Unauthorized - child token required",
-        });
+      return res.status(401).json({
+        status: false,
+        message: "Unauthorized - child token required",
+      });
 
     const childId = req.user.childId;
     const taskId =
@@ -143,7 +141,15 @@ exports.verifyAndAward = async (req, res) => {
     const parentId = req.user && req.user.userId;
     if (!parentId)
       return res.status(401).json({ status: false, message: "Unauthorized" });
-    const { taskId } = req.params;
+
+    const taskId =
+      (req.body && req.body.taskId) || (req.params && req.params.taskId);
+
+    if (!taskId)
+      return res
+        .status(400)
+        .json({ status: false, message: "taskId is required in request body" });
+
     const task = await Task.findOne({ _id: taskId, parent: parentId }).populate(
       "child category"
     );

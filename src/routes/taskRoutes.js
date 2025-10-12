@@ -9,7 +9,7 @@ router.post('/', auth, upload.uploadSingle('image'), taskController.createTask);
 router.get('/parent', auth, taskController.listTasksForParent);
 
 // parent verifies and awards
-router.post('/:taskId/verify', auth, taskController.verifyAndAward);
+router.post('/verify', auth, taskController.verifyAndAward);
 
 // child routes
 router.get('/child', auth, taskController.listTasksForChild);
