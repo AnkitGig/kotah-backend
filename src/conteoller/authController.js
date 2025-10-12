@@ -33,14 +33,23 @@ exports.login = async (req, res) => {
         expiresIn: "1d",
       }
     );
+  
+    const profileComplete = Boolean(
+      user.firstName &&
+        user.lastName &&
+        ((user.phone && user.phone.number) || user.number)
+    );
+
     res.json({
       status: true,
       token,
       user: {
         id: user._id,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
+        profileComplete,
       },
     });
   } catch (err) {
