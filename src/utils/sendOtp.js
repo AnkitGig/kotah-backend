@@ -43,6 +43,7 @@ async function sendEmail(to, code) {
   }
 
   // Create SMTP transporter using Gmail App Password or any SMTP
+  // Add sensible timeouts so that unresponsive SMTP servers don't hang requests
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: Number(process.env.SMTP_PORT || 465),
@@ -51,6 +52,10 @@ async function sendEmail(to, code) {
       user: smtpUser,
       pass: smtpPass,
     },
+    // connection timeout in ms, greeting timeout, socket timeout
+    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 10000),
+    greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 5000),
+    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 10000),
   });
 
   const mailOptions = {
@@ -61,8 +66,43 @@ async function sendEmail(to, code) {
     html,
   };
 
-  const info = await transporter.sendMail(mailOptions);
-  return { ok: true, info };
+  // Wrap sendMail in a promise that enforces an overall timeout
+  const sendMailWithTimeout = (transporter, mailOpts, timeoutMs = 12000) => {
+    return new Promise((resolve, reject) => {
+      let finished = false;
+      const timer = setTimeout(() => {
+        if (finished) return;
+        finished = true;
+        const err = new Error(`sendMail timed out after ${timeoutMs}ms`);
+        err.code = 'SENDMAIL_TIMEOUT';
+        try {
+          // close transporter if possible
+          if (transporter && typeof transporter.close === 'function') transporter.close();
+        } catch (e) {}
+        reject(err);
+      }, timeoutMs);
+
+      transporter.sendMail(mailOpts, (err, info) => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        if (err) return reject(err);
+        resolve(info);
+      });
+    });
+  };
+
+  try {
+    const info = await sendMailWithTimeout(transporter, mailOptions, Number(process.env.SMTP_SEND_TIMEOUT_MS || 12000));
+    return { ok: true, info };
+  } catch (err) {
+    console.error('[sendOtp] sendMail error or timeout', err && err.message ? err.message : err);
+    // Close transporter to free sockets
+    try {
+      if (transporter && typeof transporter.close === 'function') transporter.close();
+    } catch (e) {}
+    return { ok: false, error: err };
+  }
 }
 
 module.exports = async function sendOtp(destination, code) {
