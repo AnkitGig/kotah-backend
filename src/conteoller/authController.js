@@ -112,7 +112,7 @@ exports.signup = async (req, res) => {
     });
     await user.save();
     try {
-      await sendOtp(user.phone || user.email, user.otpCode);
+      await sendOtp(user.email || user.phone, user.otpCode);
     } catch (e) {
       console.warn("sendOtp failed", e);
     }
@@ -298,7 +298,6 @@ exports.verifyResetOtp = async (req, res) => {
         .status(400)
         .json({ status: false, message: "Invalid OTP code" });
 
-    // Issue a short-lived reset token so client can call resetPassword without resubmitting the OTP
     const resetToken = jwt.sign(
       { email: user.email, purpose: "password-reset" },
       process.env.JWT_SECRET || "dev-secret",
@@ -345,15 +344,11 @@ exports.forgotPassword = async (req, res) => {
     // 10 minutes expiry
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
-
-    // Send OTP (best-effort)
     try {
-      await sendOtp(user.phone || user.email, user.otpCode);
+      await sendOtp(user.email || user.phone, user.otpCode);
     } catch (e) {
       console.warn("forgotPassword: notify failed", e);
     }
-
-    // Do not return OTP in production responses
     res.json({ status: true, message: "Password reset OTP sent" });
   } catch (err) {
     console.error("forgotPassword error", err);
@@ -388,12 +383,10 @@ exports.resetPassword = async (req, res) => {
           .toLowerCase()
           .trim();
         if (providedEmail && tokenEmail !== providedEmail)
-          return res
-            .status(400)
-            .json({
-              status: false,
-              message: "Reset token does not match provided email",
-            });
+          return res.status(400).json({
+            status: false,
+            message: "Reset token does not match provided email",
+          });
         user = await User.findOne({ email: tokenEmail });
         if (!user)
           return res
@@ -410,12 +403,10 @@ exports.resetPassword = async (req, res) => {
         .toLowerCase()
         .trim();
       if (!email || !code)
-        return res
-          .status(400)
-          .json({
-            status: false,
-            message: "Email, code and newPassword are required",
-          });
+        return res.status(400).json({
+          status: false,
+          message: "Email, code and newPassword are required",
+        });
 
       user = await User.findOne({ email });
       if (!user)
@@ -460,12 +451,10 @@ exports.changePassword = async (req, res) => {
 
     const { currentPassword, newPassword } = req.body || {};
     if (!currentPassword || !newPassword)
-      return res
-        .status(400)
-        .json({
-          status: false,
-          message: "currentPassword and newPassword are required",
-        });
+      return res.status(400).json({
+        status: false,
+        message: "currentPassword and newPassword are required",
+      });
 
     const user = await User.findById(userId).select("+password");
     if (!user)
