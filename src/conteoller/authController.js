@@ -100,12 +100,15 @@ exports.signup = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
 
+    // generate a 6-digit numeric OTP
+    const generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
+
     const user = new User({
       firstName: firstName || undefined,
       lastName: lastName || undefined,
       email,
       password: hashed,
-      otpCode: "0000",
+      otpCode: generatedOtp,
       otpExpires: new Date(Date.now() + 10 * 60 * 1000),
       countryCode: countryCode,
       phone: phone,
