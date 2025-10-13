@@ -1,18 +1,26 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const childSchema = new mongoose.Schema({
-  parent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  name: { type: String, required: true },
-  age: { type: Number },
-  samartPhone: {
-    type: String,
-    enum: ["yes", "no"],
-    default: "yes"
+const childSchema = new mongoose.Schema(
+  {
+    parent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    name: { type: String, required: true },
+    age: { type: Number },
+    samartPhone: {
+      type: String,
+      enum: ["yes", "no"],
+      default: "yes",
+    },
+    gender: { type: String, enum: ["male", "female", "other"] },
+    avatarUrl: { type: String },
+    code: { type: String, required: true, unique: true }, // 6-digit unique code
+    coins: { type: Number, default: 0 },
+    createdAt: { type: Date, default: Date.now },
   },
-  avatarUrl: { type: String },
-  code: { type: String, required: true, unique: true }, // 6-digit unique code
-  coins: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now },
-}, { timestamps: true });
+  { timestamps: true }
+);
 
-module.exports = mongoose.model('Child', childSchema);
+module.exports = mongoose.model("Child", childSchema);

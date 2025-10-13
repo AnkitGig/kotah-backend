@@ -39,7 +39,7 @@ exports.createChild = async (req, res) => {
   const parentId = req.user && req.user.userId;
   if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
 
-    const { name, age, samartPhone } = req.body || {};
+    const { name, age, samartPhone, gender } = req.body || {};
   if (!name) return res.status(400).json({ status: false, message: "Child name required" });
     const codeType = (req.body && req.body.codeType) || "alnum";
     const allowed = ["numeric", "alpha", "alnum"];
@@ -69,7 +69,7 @@ exports.createChild = async (req, res) => {
       }
     }
 
-    const child = new Child({ parent: parentId, name, age, code, samartPhone, avatarUrl });
+    const child = new Child({ parent: parentId, name, age, code, gender, samartPhone, avatarUrl });
     await child.save();
     res.status(201).json({ status: true, data: child });
   } catch (err) {
