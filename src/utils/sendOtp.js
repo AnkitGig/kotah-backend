@@ -1,4 +1,6 @@
 const nodemailer = require("nodemailer");
+const fs = require("fs");
+const path = require("path");
 
 function isValidEmail(email) {
   if (!email || typeof email !== "string") return false;
@@ -9,9 +11,30 @@ async function sendEmail(to, code) {
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
 
-  const subject = `Your verification code`;
+  const APP_NAME = process.env.APP_NAME || "Kotah";
+  const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || process.env.SMTP_FROM || "support@kotah.example";
+  const APP_URL = process.env.APP_URL || "https://kotah.example";
+  const YEAR = new Date().getFullYear();
+
+  const subject = `${APP_NAME} — Your verification code`;
   const text = `Your verification code is: ${code}`;
-  const html = `<p>Your verification code is: <strong>${code}</strong></p>`;
+
+  // Try to load HTML template from file; fall back to a simple HTML string if not available
+  let html = `<p>Your verification code is: <strong>${code}</strong></p>`;
+  try {
+    const tplPath = path.join(__dirname, "kotah-otp-template.html");
+    if (fs.existsSync(tplPath)) {
+      const tpl = fs.readFileSync(tplPath, "utf8");
+      html = tpl
+        .replace(/{{APP_NAME}}/g, APP_NAME)
+        .replace(/{{CODE}}/g, code)
+        .replace(/{{YEAR}}/g, String(YEAR))
+        .replace(/{{SUPPORT_EMAIL}}/g, SUPPORT_EMAIL)
+        .replace(/{{APP_URL}}/g, APP_URL);
+    }
+  } catch (err) {
+    console.warn("[sendOtp] Failed to load HTML template, using simple fallback", err.message || err);
+  }
 
   if (!smtpUser || !smtpPass) {
     console.log("[sendOtp] SMTP not configured — falling back to log");

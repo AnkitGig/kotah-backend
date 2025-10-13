@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{APP_NAME}} — Verification Code</title>
+    <style>
+      /* Reset */
+      body,
+      table,
+      td {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+      body {
+        background-color: #f4f6fb;
+        margin: 0;
+        padding: 0;
+        -webkit-text-size-adjust: none;
+      }
+      .email-wrapper {
+        width: 100%;
+        padding: 24px 16px;
+      }
+      .email-card {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(32, 45, 66, 0.08);
+      }
+      .header {
+        background: linear-gradient(90deg, #4f46e5, #06b6d4);
+        padding: 24px;
+        color: #fff;
+        text-align: center;
+      }
+      .logo {
+        font-weight: 700;
+        font-size: 20px;
+        letter-spacing: 0.2px;
+      }
+      .content {
+        padding: 28px 32px;
+        color: #0f172a;
+      }
+      .h1 {
+        font-size: 20px;
+        margin: 0 0 8px;
+      }
+      .lead {
+        font-size: 14px;
+        color: #475569;
+        margin: 0 0 18px;
+      }
+      .code-box {
+        display: inline-block;
+        padding: 18px 22px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px dashed #e6eef8;
+        font-weight: 700;
+        font-size: 28px;
+        letter-spacing: 4px;
+        color: #0f172a;
+      }
+      .note {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 18px;
+      }
+      .button {
+        display: inline-block;
+        margin-top: 22px;
+        padding: 12px 18px;
+        background: #4f46e5;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+      }
+      .footer {
+        padding: 18px 32px;
+        font-size: 12px;
+        color: #94a3b8;
+        text-align: center;
+      }
+      a.inline-link {
+        color: #2563eb;
+        text-decoration: none;
+      }
+      @media (max-width: 420px) {
+        .content {
+          padding: 20px;
+        }
+        .code-box {
+          font-size: 22px;
+          padding: 14px 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-wrapper">
+      <div class="email-card" role="article" aria-roledescription="email">
+        <div class="header">
+          <div class="logo">{{APP_NAME}}</div>
+        </div>
+        <div class="content">
+          <h1 class="h1">Verify your email</h1>
+          <p class="lead">
+            Use the code below to verify your email address. This code will
+            expire in 10 minutes.
+          </p>
+
+          <div style="text-align: center; margin: 20px 0">
+            <div class="code-box">{{CODE}}</div>
+          </div>
+
+          <p class="note">
+            If you didn't request this, you can safely ignore this email. If you
+            need help, contact
+            <a class="inline-link" href="mailto:{{SUPPORT_EMAIL}}"
+              >{{SUPPORT_EMAIL}}</a
+            >.
+          </p>
+
+          <p style="margin-top: 20px">Thanks,<br />{{APP_NAME}} team</p>
+        </div>
+        <div class="footer">
+          © {{YEAR}} {{APP_NAME}} —
+          <a href="{{APP_URL}}" class="inline-link">Visit</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
