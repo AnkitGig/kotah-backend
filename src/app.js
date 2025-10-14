@@ -20,7 +20,6 @@ app.use("/api/categories", categoryRoutes);
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
-// About and Terms pages (static files in /public)
 app.get("/about", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "about.html"));
 });

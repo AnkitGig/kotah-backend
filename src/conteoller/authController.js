@@ -274,7 +274,6 @@ exports.verifyOtp = async (req, res) => {
   }
 };
 
-// Verify OTP for password reset (separate from account verification)
 exports.verifyResetOtp = async (req, res) => {
   try {
     const { email: rawEmail, code } = req.body || {};
