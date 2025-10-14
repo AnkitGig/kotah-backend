@@ -7,6 +7,7 @@ const childRoutes = require("./routes/childRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const rewardRoutes = require("./routes/rewardRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
+const holidayRoutes = require("./routes/holidayRoutes");
 
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
@@ -17,6 +18,7 @@ app.use("/api/children", childRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/rewards", rewardRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/holidays", holidayRoutes);
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
