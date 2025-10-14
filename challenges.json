@@ -1,0 +1,51 @@
+[
+  {
+    "id": "stargazer",
+    "title": "Stargazer",
+    "description": "An evocative short about curiosity and wonder as two siblings spend a night mapping constellations and imagining future adventures. This challenge emphasizes visual composition, lighting, and the use of silence to build mood.",
+    "categories": ["Short", "Drama", "Visual Storytelling"],
+    "daysRemaining": 14,
+    "image": "https://res.cloudinary.com/dxarlr4pl/image/upload/v1760468916/images_ybmoqz.jpg"
+  }
+  ,
+  {
+    "id": "echoes",
+    "title": "Echoes",
+    "description": "A reflective piece about memory and how small sounds from the past shape who we become. Focus on sound design, repetition, and editing rhythm.",
+    "categories": ["Experimental", "Sound", "Short"],
+    "daysRemaining": 12,
+    "image": "https://res.cloudinary.com/dxarlr4pl/image/upload/v1760468838/70dcd24d705f223044d9812612c7b99e.1000x1000x1_isbac8.jpg"
+  },
+  {
+    "id": "paper-boat",
+    "title": "Paper Boat",
+    "description": "A tender, low-budget story that follows a child's paper boat on a neighborhood stream as it encounters small adventures. Emphasize practical effects and point-of-view shots.",
+    "categories": ["Family", "DIY", "Visual Storytelling"],
+    "daysRemaining": 10,
+    "image": "https://res.cloudinary.com/dxarlr4pl/image/upload/v1760469014/hq720_vtsyx3.jpg"
+  },
+  {
+    "id": "tiny-hero",
+    "title": "Tiny Hero",
+    "description": "A micro-drama where an everyday act of kindness changes a community. This challenge highlights pacing, casting non-actors, and authentic performances.",
+    "categories": ["Drama", "Community", "Short"],
+    "daysRemaining": 7,
+    "image": "https://res.cloudinary.com/dxarlr4pl/image/upload/v1760469110/images_1_cwr002.jpg"
+  },
+  {
+    "id": "rainy-day",
+    "title": "Rainy Day",
+    "description": "A cinematic study of mood and atmosphere set during a single rainy afternoon. Concentrate on reflections, color temperature, and the choreography of background action.",
+    "categories": ["Mood", "Cinematography", "Short"],
+    "daysRemaining": 18,
+    "image": "https://res.cloudinary.com/dxarlr4pl/image/upload/v1760469110/download_1_jl8rho.jpg"
+  },
+  {
+    "id": "garden-song",
+    "title": "Garden Song",
+    "description": "A lyrical vignette about growth and seasonal change told through close observation of a small garden. Use time-lapse, natural sound, and gentle narration.",
+    "categories": ["Nature", "Documentary", "Short"],
+    "daysRemaining": 16,
+    "image": "https://res.cloudinary.com/dxarlr4pl/image/upload/v1760469241/hq720_1_hhliwr.jpg"
+  }
+]

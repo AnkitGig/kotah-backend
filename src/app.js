@@ -8,6 +8,7 @@ const taskRoutes = require("./routes/taskRoutes");
 const rewardRoutes = require("./routes/rewardRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const holidayRoutes = require("./routes/holidayRoutes");
+const challengeRoutes = require("./routes/challengeRoutes");
 
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
@@ -19,6 +20,7 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/rewards", rewardRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/holidays", holidayRoutes);
+app.use("/api/challenges", challengeRoutes);
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
