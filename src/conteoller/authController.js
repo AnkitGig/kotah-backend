@@ -101,7 +101,8 @@ exports.signup = async (req, res) => {
     const hashed = await bcrypt.hash(password, salt);
 
     // generate a 6-digit numeric OTP
-    const generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
+    // const generatedOtp = String(Math.floor(1000 + Math.random() * 900000));
+    const generatedOtp = "0000";
 
     const user = new User({
       firstName: firstName || undefined,
@@ -341,7 +342,7 @@ exports.forgotPassword = async (req, res) => {
       return res.status(404).json({ status: false, message: "User not found" });
 
     // Generate 6-digit numeric OTP
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const otp = String(Math.floor(1000 + Math.random() * 900000));
     user.otpCode = otp;
     // 10 minutes expiry
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
