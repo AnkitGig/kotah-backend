@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema(
     gender: { type: String, enum: ["male", "female", "other"] },
     roleInFamily: {
       type: String,
-      enum: ["Head", "Mom", "Son", "Daughter", "Other"],
+      enum: ["Head", "Mom", "Son", "Daughter", "Other", "Father"],
     },
     locations: { type: [locationSchema], default: [] },
     avatarUrl: { type: String },
