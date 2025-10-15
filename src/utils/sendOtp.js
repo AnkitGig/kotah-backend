@@ -46,7 +46,7 @@ async function sendEmail(to, code) {
   // Add sensible timeouts so that unresponsive SMTP servers don't hang requests
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 465),
+    port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === "true" : true,
     auth: {
       user: smtpUser,
