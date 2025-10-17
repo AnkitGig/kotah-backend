@@ -42,21 +42,22 @@ async function sendEmail(to, code) {
     return { ok: true, fallback: true };
   }
 
-  // Create SMTP transporter using Gmail App Password or any SMTP
-  // Add sensible timeouts so that unresponsive SMTP servers don't hang requests
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === "false" : false,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-    // connection timeout in ms, greeting timeout, socket timeout
-    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 10000),
-    greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 5000),
-    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 10000),
-  });
+  // Create helper to build a transporter per-attempt.
+  const buildTransporter = () =>
+    nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE
+        ? process.env.SMTP_SECURE === "true"
+        : false,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+      connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 10000),
+      greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 5000),
+      socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 10000),
+    });
 
   const mailOptions = {
     from: process.env.SMTP_FROM || smtpUser,
@@ -74,35 +75,71 @@ async function sendEmail(to, code) {
         if (finished) return;
         finished = true;
         const err = new Error(`sendMail timed out after ${timeoutMs}ms`);
-        err.code = 'SENDMAIL_TIMEOUT';
+        err.code = "SENDMAIL_TIMEOUT";
         try {
-          // close transporter if possible
-          if (transporter && typeof transporter.close === 'function') transporter.close();
+          if (transporter && typeof transporter.close === "function") transporter.close();
         } catch (e) {}
         reject(err);
       }, timeoutMs);
 
-      transporter.sendMail(mailOpts, (err, info) => {
+      try {
+        transporter.sendMail(mailOpts, (err, info) => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timer);
+          if (err) return reject(err);
+          resolve(info);
+        });
+      } catch (err) {
         if (finished) return;
         finished = true;
         clearTimeout(timer);
-        if (err) return reject(err);
-        resolve(info);
-      });
+        reject(err);
+      }
     });
   };
 
-  try {
-    const info = await sendMailWithTimeout(transporter, mailOptions, Number(process.env.SMTP_SEND_TIMEOUT_MS || 12000));
-    return { ok: true, info };
-  } catch (err) {
-    console.error('[sendOtp] sendMail error or timeout', err && err.message ? err.message : err);
-    // Close transporter to free sockets
+  // Retry logic with exponential backoff for transient network errors/timeouts.
+  const smtpRetries = Number(process.env.SMTP_RETRIES || 2);
+  const baseDelay = Number(process.env.SMTP_RETRY_DELAY_MS || 2000);
+  const sendTimeout = Number(process.env.SMTP_SEND_TIMEOUT_MS || 12000);
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  const totalAttempts = Math.max(1, 1 + smtpRetries);
+  let lastErr = null;
+
+  for (let attempt = 1; attempt <= totalAttempts; attempt++) {
+    const transporter = buildTransporter();
     try {
-      if (transporter && typeof transporter.close === 'function') transporter.close();
-    } catch (e) {}
-    return { ok: false, error: err };
+      if (attempt > 1) console.log(`[sendOtp] retry attempt ${attempt}/${totalAttempts}`);
+      const info = await sendMailWithTimeout(transporter, mailOptions, sendTimeout);
+      // success
+      try {
+        if (typeof transporter.close === "function") transporter.close();
+      } catch (e) {}
+      return { ok: true, info, attempt };
+    } catch (err) {
+      lastErr = err;
+      console.error(`[sendOtp] attempt ${attempt} failed:`, err && err.message ? err.message : err, "code=", err && err.code ? err.code : "N/A");
+      try {
+        if (transporter && typeof transporter.close === "function") transporter.close();
+      } catch (e) {}
+
+      // If not last attempt, wait with exponential backoff
+      if (attempt < totalAttempts) {
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        console.log(`[sendOtp] waiting ${delay}ms before next attempt`);
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(delay);
+        continue;
+      }
+    }
   }
+
+  // All attempts failed
+  console.error('[sendOtp] all send attempts failed', lastErr && lastErr.message ? lastErr.message : lastErr);
+  return { ok: false, error: lastErr };
 }
 
 module.exports = async function sendOtp(destination, code) {
