@@ -102,7 +102,7 @@ async function sendEmail(to, code) {
   // Retry logic with exponential backoff for transient network errors/timeouts.
   const smtpRetries = Number(process.env.SMTP_RETRIES || 2);
   const baseDelay = Number(process.env.SMTP_RETRY_DELAY_MS || 2000);
-  const sendTimeout = Number(process.env.SMTP_SEND_TIMEOUT_MS || 12000);
+  const sendTimeout = Number(process.env.SMTP_SEND_TIMEOUT_MS || 5000);
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
