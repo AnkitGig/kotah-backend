@@ -54,9 +54,9 @@ async function sendEmail(to, code) {
         user: smtpUser,
         pass: smtpPass,
       },
-      connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 10000),
+      connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 5000),
       greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 5000),
-      socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 10000),
+      socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 5000),
     });
 
   const mailOptions = {
@@ -68,7 +68,7 @@ async function sendEmail(to, code) {
   };
 
   // Wrap sendMail in a promise that enforces an overall timeout
-  const sendMailWithTimeout = (transporter, mailOpts, timeoutMs = 12000) => {
+  const sendMailWithTimeout = (transporter, mailOpts, timeoutMs = 5000) => {
     return new Promise((resolve, reject) => {
       let finished = false;
       const timer = setTimeout(() => {
