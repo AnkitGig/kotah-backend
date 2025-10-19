@@ -146,7 +146,22 @@ exports.listChildren = async (req, res) => {
     const parentId = req.user && req.user.userId;
     if (!parentId)
       return res.status(401).json({ status: false, message: "Unauthorized" });
-    const children = await Child.find({ parent: parentId }).select("-__v");
+  // exclude members with type 'family'
+  const children = await Child.find({ parent: parentId, type: { $ne: "family" } }).select("-__v");
+    res.json({ status: true, data: children });
+  } catch (err) {
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+
+exports.listfamily = async (req, res) => {
+  try {
+    const parentId = req.user && req.user.userId;
+    if (!parentId)
+      return res.status(401).json({ status: false, message: "Unauthorized" });
+  // exclude members with type 'child' and omit coins from the response
+  const children = await Child.find({ parent: parentId, type: { $ne: "child" } }).select("-__v -coins");
     res.json({ status: true, data: children });
   } catch (err) {
     res.status(500).json({ status: false, message: "Server error" });
