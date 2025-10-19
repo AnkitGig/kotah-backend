@@ -7,6 +7,7 @@ const { upload } = require('../middleware/multer');
 router.post('/', auth, upload.single('avatar'), childController.createChild);
 router.get('/', auth, childController.listChildren);
 router.get('/get-listfamily', auth, childController.listfamily);
+router.get('/me', auth, childController.getChildProfile);
 
 
 router.post('/login-by-code', childController.childLogin);

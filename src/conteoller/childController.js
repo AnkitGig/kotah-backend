@@ -167,3 +167,30 @@ exports.listfamily = async (req, res) => {
     res.status(500).json({ status: false, message: "Server error" });
   }
 };
+
+
+// return profile for the token-holder child
+exports.getChildProfile = async (req, res) => {
+  try {
+    const childId = req.user && req.user.childId;
+    const role = req.user && req.user.role;
+    // only tokens that represent a child/family member should access this
+    if (!childId || !["child", "family"].includes(role))
+      return res.status(403).json({ status: false, message: "Forbidden" });
+
+    const child = await Child.findById(childId).populate("parent", "firstName lastName email").select("-__v");
+    if (!child)
+      return res.status(404).json({ status: false, message: "Child not found" });
+
+    // if the child is a family member, omit coins from the response
+    const responseChild = child.toObject ? child.toObject() : JSON.parse(JSON.stringify(child));
+    if (responseChild.type === "family") {
+      delete responseChild.coins;
+    }
+
+    res.json({ status: true, data: responseChild });
+  } catch (err) {
+    console.error("getChildProfile error", err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
