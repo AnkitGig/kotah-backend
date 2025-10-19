@@ -64,7 +64,33 @@ exports.createTask = async (req, res) => {
         : undefined,
     });
 
-    // handle optional image upload (req.file)
+    try {
+      if (req.user && req.user.role === "family") {
+        const assignerChild = await Child.findById(req.user.childId);
+        if (assignerChild) {
+          task.assignedBy = {
+            id: String(assignerChild._id),
+            role: "family",
+            name: assignerChild.name,
+          };
+        }
+      } else if (req.user && req.user.userId) {
+        // assigner is parent user
+        const User = require("../models/User");
+        const assignerUser = await User.findById(req.user.userId).select(
+          "firstName lastName"
+        );
+        if (assignerUser) {
+          task.assignedBy = {
+            id: String(assignerUser._id),
+            role: "user",
+            name: `${assignerUser.firstName || ""} ${assignerUser.lastName || ""}`.trim(),
+          };
+        }
+      }
+    } catch (e) {
+      console.error("assignedBy population error", e);
+    }
     if (req.file) {
       try {
         const uploaderPath = path.join(
@@ -89,16 +115,17 @@ exports.createTask = async (req, res) => {
       }
     }
 
-    await task.save();
-    const saved = await Task.findById(task._id).populate("child category");
-    res.status(201).json({ status: true, data: saved });
+  await task.save();
+  const saved = await Task.findById(task._id)
+    .populate("child category")
+    .populate({ path: "parent", select: "firstName lastName email" });
+  res.status(201).json({ status: true, data: saved });
   } catch (err) {
     console.error("createTask error", err);
     res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
-// child marks task complete (sets completed true) — awaiting parent verification
 exports.markCompleteByChild = async (req, res) => {
   try {
     const childAuth = req.user && req.user.role === "child";
@@ -125,10 +152,11 @@ exports.markCompleteByChild = async (req, res) => {
         .status(400)
         .json({ status: false, message: "Already completed" });
 
-    task.completed = true;
-    task.completedAt = new Date();
-    await task.save();
-    res.json({ status: true, data: task });
+  task.completed = true;
+  task.completedAt = new Date();
+  await task.save();
+  const populated = await Task.findById(task._id).populate("child category").populate({ path: "parent", select: "firstName lastName email" });
+  res.json({ status: true, data: populated });
   } catch (err) {
     console.error("markCompleteByChild error", err);
     res.status(500).json({ status: false, message: "Server error" });
@@ -150,9 +178,9 @@ exports.verifyAndAward = async (req, res) => {
         .status(400)
         .json({ status: false, message: "taskId is required in request body" });
 
-    const task = await Task.findOne({ _id: taskId, parent: parentId }).populate(
-      "child category"
-    );
+    let task = await Task.findOne({ _id: taskId, parent: parentId })
+      .populate("child category")
+      .populate({ path: "parent", select: "firstName lastName email" });
     if (!task)
       return res.status(404).json({ status: false, message: "Task not found" });
     if (!task.completed)
@@ -165,11 +193,14 @@ exports.verifyAndAward = async (req, res) => {
         .json({ status: false, message: "Already verified" });
     task.verified = true;
     await task.save();
+    const populatedTask = await Task.findById(task._id)
+      .populate("child category")
+      .populate({ path: "parent", select: "firstName lastName email" });
     const child = await Child.findById(task.child._id);
     child.coins = (child.coins || 0) + (task.coinValue || 0);
     await child.save();
 
-    res.json({ status: true, task, child });
+    res.json({ status: true, task: populatedTask, child });
   } catch (err) {
     console.error("verifyAndAward error", err);
     res.status(500).json({ status: false, message: "Server error" });
@@ -181,9 +212,9 @@ exports.listTasksForParent = async (req, res) => {
     const parentId = req.user && req.user.userId;
     if (!parentId)
       return res.status(401).json({ status: false, message: "Unauthorized" });
-    const tasks = await Task.find({ parent: parentId }).populate(
-      "child category"
-    );
+    const tasks = await Task.find({ parent: parentId })
+      .populate("child category")
+      .populate({ path: "parent", select: "firstName lastName email" });
     res.json({ status: true, data: tasks });
   } catch (err) {
     res.status(500).json({ status: false, message: "Server error" });
@@ -199,7 +230,9 @@ exports.listTasksForChild = async (req, res) => {
         message: "Unauthorized - child token required",
       });
     const childId = req.user.childId;
-    const tasks = await Task.find({ child: childId }).populate("category");
+    const tasks = await Task.find({ child: childId })
+      .populate("category")
+      .populate({ path: "parent", select: "firstName lastName email" });
     res.json({ status: true, data: tasks });
   } catch (err) {
     res.status(500).json({ status: false, message: "Server error" });

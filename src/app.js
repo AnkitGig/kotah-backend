@@ -16,6 +16,7 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/children", childRoutes);
+app.use("/api/faimly", childRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/rewards", rewardRoutes);
 app.use("/api/categories", categoryRoutes);

@@ -16,7 +16,8 @@ const childSchema = new mongoose.Schema(
     },
     gender: { type: String, enum: ["male", "female", "other"] },
     avatarUrl: { type: String },
-    code: { type: String, required: true, unique: true }, // 6-digit unique code
+  code: { type: String, required: true, unique: true }, // 6-character unique code (digits/letters)
+  type: { type: String, enum: ["child", "family"], default: "child" },
     coins: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
   },

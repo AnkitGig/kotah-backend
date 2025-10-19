@@ -41,6 +41,12 @@ const taskSchema = new mongoose.Schema(
     completed: { type: Boolean, default: false },
     verified: { type: Boolean, default: false }, // parent verification
     completedAt: { type: Date },
+    // who assigned the task (stores minimal info so both parent user and family-member child can be recorded)
+    assignedBy: {
+      id: { type: String },
+      role: { type: String, enum: ["user", "family", "child"] },
+      name: { type: String },
+    },
   },
   { timestamps: true }
 );
