@@ -34,12 +34,10 @@ exports.listRewards = async (req, res) => {
         parent: parentId,
       });
       if (!child)
-        return res
-          .status(404)
-          .json({
-            status: false,
-            message: "Child not found or not owned by you",
-          });
+        return res.status(404).json({
+          status: false,
+          message: "Child not found or not owned by you",
+        });
       const rewards = await Reward.find({
         active: true,
         $or: [
@@ -77,6 +75,22 @@ exports.createReward = async (req, res) => {
         .status(400)
         .json({ status: false, message: "title and cost required" });
     const rewardData = { title, description, cost, type, metadata };
+    try {
+      if (req.file && req.file.path) {
+        const uploaderModule = await import("../utils/customUploader.js");
+        const customUploader =
+          uploaderModule && (uploaderModule.default || uploaderModule);
+        if (typeof customUploader === "function") {
+          const uploadedUrl = await customUploader({
+            file: req.file,
+            folder: "rewards",
+          });
+          if (uploadedUrl) rewardData.imageUrl = uploadedUrl;
+        }
+      }
+    } catch (e) {
+      console.error("createReward image upload error", e);
+    }
     if (targetChildren) {
       let ids = [];
       try {
@@ -123,21 +137,17 @@ exports.claimReward = async (req, res) => {
   try {
     const childAuth = req.user && req.user.role === "child";
     if (!childAuth)
-      return res
-        .status(401)
-        .json({
-          status: false,
-          message: "Unauthorized - child token required",
-        });
+      return res.status(401).json({
+        status: false,
+        message: "Unauthorized - child token required",
+      });
     const childId = req.user.childId;
     const { rewardId } = req.body && req.body.rewardId ? req.body : req.params;
     if (!rewardId)
-      return res
-        .status(400)
-        .json({
-          status: false,
-          message: "rewardId is required in request body",
-        });
+      return res.status(400).json({
+        status: false,
+        message: "rewardId is required in request body",
+      });
     const reward = await Reward.findById(rewardId);
     if (!reward || !reward.active)
       return res
@@ -148,12 +158,10 @@ exports.claimReward = async (req, res) => {
       // compare ids as strings
       const allowed = targets.map((t) => String(t));
       if (!allowed.includes(String(childId))) {
-        return res
-          .status(403)
-          .json({
-            status: false,
-            message: "Reward not available for this child",
-          });
+        return res.status(403).json({
+          status: false,
+          message: "Reward not available for this child",
+        });
       }
     }
     const child = await Child.findById(childId);
