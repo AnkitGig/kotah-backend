@@ -8,5 +8,7 @@ router.get('/', auth, rewardController.listRewards);
 router.get('/for-child', auth, rewardController.listRewards);
 router.post('/', auth, multerMiddleware.uploadSingle('image'), rewardController.createReward);
 router.post('/claim', auth, rewardController.claimReward);
+router.post('/approve-claim', auth, rewardController.approveClaim);
+router.get('/claims', auth, rewardController.listClaims);
 
 module.exports = router;

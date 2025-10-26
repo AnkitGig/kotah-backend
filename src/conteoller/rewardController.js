@@ -1,5 +1,6 @@
 const Reward = require("../models/Reward");
 const Child = require("../models/Child");
+const RewardClaim = require("../models/RewardClaim");
 
 exports.listRewards = async (req, res) => {
   try {
@@ -132,7 +133,6 @@ exports.createReward = async (req, res) => {
   }
 };
 
-// child claims reward: deduct coins and return reward metadata
 exports.claimReward = async (req, res) => {
   try {
     const childAuth = req.user && req.user.role === "child";
@@ -141,43 +141,117 @@ exports.claimReward = async (req, res) => {
         status: false,
         message: "Unauthorized - child token required",
       });
+
     const childId = req.user.childId;
     const { rewardId } = req.body && req.body.rewardId ? req.body : req.params;
     if (!rewardId)
-      return res.status(400).json({
-        status: false,
-        message: "rewardId is required in request body",
-      });
+      return res.status(400).json({ status: false, message: "rewardId is required" });
+
     const reward = await Reward.findById(rewardId);
     if (!reward || !reward.active)
-      return res
-        .status(404)
-        .json({ status: false, message: "Reward not found" });
+      return res.status(404).json({ status: false, message: "Reward not found" });
+
     const targets = reward.targetChildren || [];
     if (Array.isArray(targets) && targets.length > 0) {
-      // compare ids as strings
       const allowed = targets.map((t) => String(t));
       if (!allowed.includes(String(childId))) {
-        return res.status(403).json({
-          status: false,
-          message: "Reward not available for this child",
-        });
+        return res.status(403).json({ status: false, message: "Reward not available for this child" });
       }
     }
+
     const child = await Child.findById(childId);
-    if (!child)
-      return res
-        .status(404)
-        .json({ status: false, message: "Child not found" });
-    if ((child.coins || 0) < reward.cost)
-      return res
-        .status(400)
-        .json({ status: false, message: "Not enough coins" });
-    child.coins -= reward.cost;
-    await child.save();
-    res.json({ status: true, message: "Reward claimed", reward, child });
+    if (!child) return res.status(404).json({ status: false, message: "Child not found" });
+
+    // Prevent claim if child doesn't have enough coins at claim time
+    if ((child.coins || 0) < reward.cost) {
+      return res.status(400).json({ status: false, message: "Not enough coins to claim reward" });
+    }
+
+    // Create a pending claim. Parent will approve later which will deduct coins.
+    const claim = new RewardClaim({ reward: reward._id, child: child._id, status: "pending" });
+    await claim.save();
+    res.status(201).json({ status: true, message: "Reward claim created (pending approval)", data: claim });
   } catch (err) {
     console.error("claimReward error", err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+exports.approveClaim = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || user.role === "child")
+      return res.status(401).json({ status: false, message: "Unauthorized - parent token required" });
+
+    const parentId = user.userId;
+    const { claimId } = req.body && req.body.claimId ? req.body : req.params;
+    if (!claimId) return res.status(400).json({ status: false, message: "claimId is required" });
+
+    const claim = await RewardClaim.findById(claimId).populate("reward child");
+    if (!claim) return res.status(404).json({ status: false, message: "Claim not found" });
+    if (claim.status !== "pending") return res.status(400).json({ status: false, message: "Claim is not pending" });
+
+    const child = await Child.findById(claim.child._id || claim.child);
+    if (!child) return res.status(404).json({ status: false, message: "Child not found" });
+    // verify parent owns the child
+    if (String(child.parent) !== String(parentId)) {
+      return res.status(403).json({ status: false, message: "You do not own this child" });
+    }
+
+    const reward = await Reward.findById(claim.reward._id || claim.reward);
+    if (!reward) return res.status(404).json({ status: false, message: "Reward not found" });
+
+    if ((child.coins || 0) < reward.cost) {
+      claim.status = "rejected";
+      await claim.save();
+      return res.status(400).json({ status: false, message: "Child does not have enough coins; claim rejected" });
+    }
+
+    // Deduct coins and approve
+    child.coins -= reward.cost;
+    await child.save();
+
+    claim.status = "approved";
+    claim.approver = parentId;
+    claim.approvedAt = new Date();
+    await claim.save();
+
+    res.json({ status: true, message: "Claim approved", data: { claim, child } });
+  } catch (err) {
+    console.error("approveClaim error", err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+exports.listClaims = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ status: false, message: "Unauthorized" });
+
+    const statusFilter = req.query && req.query.status;
+
+    if (user.role === "child") {
+      const childId = user.childId;
+      if (!childId) return res.status(400).json({ status: false, message: "Child id missing in token" });
+      const q = { child: childId };
+      if (statusFilter) q.status = statusFilter;
+      const claims = await RewardClaim.find(q).populate("reward approver");
+      return res.json({ status: true, data: claims });
+    }
+
+    // parent
+    const parentId = user.userId;
+    if (!parentId) return res.status(401).json({ status: false, message: "Unauthorized" });
+
+    // find children
+    const children = await Child.find({ parent: parentId }).select("_id");
+    const childIds = children.map((c) => c._id);
+    const q = { child: { $in: childIds } };
+    if (statusFilter) q.status = statusFilter;
+    const claims = await RewardClaim.find(q).populate("reward child approver");
+    res.json({ status: true, data: claims });
+  } catch (err) {
+    console.error("listClaims error", err);
     res.status(500).json({ status: false, message: "Server error" });
   }
 };
