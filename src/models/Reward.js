@@ -10,6 +10,7 @@ const rewardSchema = new mongoose.Schema(
       enum: ["badge", "voucher", "custom"],
       default: "custom",
     },
+    imageUrl: {type: String},
     metadata: { type: mongoose.Schema.Types.Mixed },
     targetChildren: [{ type: mongoose.Schema.Types.ObjectId, ref: "Child" }],
     active: { type: Boolean, default: true },
