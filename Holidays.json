@@ -2,12 +2,7 @@
   {
     "date": "2025-02-22",
     "name": "Founding Day",
-    "type": "Public holiday"
-  },
-  {
-    "date": "2025-03-01",
-    "name": "Ramadan begins (tentative)",
-    "type": "Observance"
+    "type": "National Holiday"
   },
   {
     "date": "2025-03-01",
@@ -20,48 +15,488 @@
     "type": "Observance"
   },
   {
+    "date": "2025-03-20",
+    "name": "March Equinox",
+    "type": "Season"
+  },
+  {
     "date": "2025-03-30",
     "name": "Eid al-Fitr",
-    "type": "Public holiday"
-  },
-  {
-    "date": "2025-03-31",
-    "name": "Eid al-Fitr (tentative)",
-    "type": "Public holiday"
+    "type": "National Holiday"
   },
   {
     "date": "2025-03-31",
     "name": "Eid al-Fitr Holiday",
-    "type": "Public holiday"
-  },
-  {
-    "date": "2025-04-01",
-    "name": "Eid al-Fitr Holiday (tentative)",
-    "type": "Public holiday"
+    "type": "National Holiday"
   },
   {
     "date": "2025-04-01",
     "name": "Eid al-Fitr Holiday",
-    "type": "Public holiday"
-  },
-  {
-    "date": "2025-04-02",
-    "name": "Eid al-Fitr Holiday (tentative)",
-    "type": "Public holiday"
+    "type": "National Holiday"
   },
   {
     "date": "2025-04-02",
     "name": "Eid al-Fitr Holiday",
-    "type": "Public holiday"
-  },
-  {
-    "date": "2025-04-03",
-    "name": "Eid al-Fitr Holiday (tentative)",
-    "type": "Public holiday"
+    "type": "National Holiday"
   },
   {
     "date": "2025-06-05",
     "name": "Arafat Day",
-    "type": "Public holiday"
+    "type": "National Holiday"
+  },
+  {
+    "date": "2025-06-06",
+    "name": "Eid al-Adha",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2025-06-07",
+    "name": "Eid al-Adha Holiday",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2025-06-08",
+    "name": "Eid al-Adha Holiday",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2025-06-21",
+    "name": "June Solstice",
+    "type": "Season"
+  },
+  {
+    "date": "2025-06-26",
+    "name": "Muharram (Muslim New Year)",
+    "type": "Observance"
+  },
+  {
+    "date": "2025-09-22",
+    "name": "September Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2025-09-23",
+    "name": "Saudi National Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2025-12-21",
+    "name": "December Solstice",
+    "type": "Season"
+  }
+,
+  {
+    "date": "2026-02-18",
+    "name": "Ramadan begins (Tentative Date)",
+    "type": "Observance"
+  },
+  {
+    "date": "2026-02-22",
+    "name": "Founding Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2026-03-11",
+    "name": "Flag Day",
+    "type": "Observance"
+  },
+  {
+    "date": "2026-03-20",
+    "name": "Eid al-Fitr (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2026-03-20",
+    "name": "March Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2026-03-21",
+    "name": "Eid al-Fitr Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2026-03-22",
+    "name": "Eid al-Fitr Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2026-05-26",
+    "name": "Arafat Day (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2026-05-27",
+    "name": "Eid al-Adha (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2026-05-28",
+    "name": "Eid al-Adha Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2026-05-29",
+    "name": "Eid al-Adha Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2026-06-16",
+    "name": "Muharram (Muslim New Year) (Tentative Date)",
+    "type": "Observance"
+  },
+  {
+    "date": "2026-06-21",
+    "name": "June Solstice",
+    "type": "Season"
+  },
+  {
+    "date": "2026-09-23",
+    "name": "Saudi National Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2026-09-23",
+    "name": "September Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2026-12-21",
+    "name": "December Solstice",
+    "type": "Season"
+  }
+,
+  {
+    "date": "2027-02-08",
+    "name": "Ramadan begins (Tentative Date)",
+    "type": "Observance"
+  },
+  {
+    "date": "2027-02-22",
+    "name": "Founding Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2027-03-10",
+    "name": "Eid al-Fitr (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2027-03-11",
+    "name": "Eid al-Fitr Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2027-03-11",
+    "name": "Flag Day",
+    "type": "Observance"
+  },
+  {
+    "date": "2027-03-12",
+    "name": "Eid al-Fitr Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2027-03-20",
+    "name": "March Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2027-05-15",
+    "name": "Arafat Day (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2027-05-16",
+    "name": "Eid al-Adha (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2027-05-17",
+    "name": "Eid al-Adha Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2027-05-18",
+    "name": "Eid al-Adha Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2027-06-06",
+    "name": "Muharram (Muslim New Year) (Tentative Date)",
+    "type": "Observance"
+  },
+  {
+    "date": "2027-06-21",
+    "name": "June Solstice",
+    "type": "Season"
+  },
+  {
+    "date": "2027-09-23",
+    "name": "Saudi National Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2027-09-23",
+    "name": "September Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2027-12-22",
+    "name": "December Solstice",
+    "type": "Season"
+  }
+,
+  {
+    "date": "2028-01-28",
+    "name": "Ramadan begins (Tentative Date)",
+    "type": "Observance"
+  },
+  {
+    "date": "2028-02-22",
+    "name": "Founding Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2028-02-27",
+    "name": "Eid al-Fitr (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2028-02-28",
+    "name": "Eid al-Fitr Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2028-02-29",
+    "name": "Eid al-Fitr Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2028-03-11",
+    "name": "Flag Day",
+    "type": "Observance"
+  },
+  {
+    "date": "2028-03-20",
+    "name": "March Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2028-05-04",
+    "name": "Arafat Day (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2028-05-05",
+    "name": "Eid al-Adha (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2028-05-06",
+    "name": "Eid al-Adha Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2028-05-07",
+    "name": "Eid al-Adha Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2028-05-25",
+    "name": "Muharram (Muslim New Year) (Tentative Date)",
+    "type": "Observance"
+  },
+  {
+    "date": "2028-06-20",
+    "name": "June Solstice",
+    "type": "Season"
+  },
+  {
+    "date": "2028-09-22",
+    "name": "September Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2028-09-23",
+    "name": "Saudi National Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2028-09-24",
+    "name": "Day off for Saudi National Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2028-12-21",
+    "name": "December Solstice",
+    "type": "Season"
+  }
+,
+  {
+    "date": "2029-01-16",
+    "name": "Ramadan begins (Tentative Date)",
+    "type": "Observance"
+  },
+  {
+    "date": "2029-02-15",
+    "name": "Eid al-Fitr (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2029-02-16",
+    "name": "Eid al-Fitr Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2029-02-17",
+    "name": "Eid al-Fitr Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2029-02-22",
+    "name": "Founding Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2029-03-11",
+    "name": "Flag Day",
+    "type": "Observance"
+  },
+  {
+    "date": "2029-03-20",
+    "name": "March Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2029-04-23",
+    "name": "Arafat Day (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2029-04-24",
+    "name": "Eid al-Adha (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2029-04-25",
+    "name": "Eid al-Adha Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2029-04-26",
+    "name": "Eid al-Adha Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2029-05-15",
+    "name": "Muharram (Muslim New Year) (Tentative Date)",
+    "type": "Observance"
+  },
+  {
+    "date": "2029-06-21",
+    "name": "June Solstice",
+    "type": "Season"
+  },
+  {
+    "date": "2029-09-22",
+    "name": "September Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2029-09-23",
+    "name": "Saudi National Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2029-12-21",
+    "name": "December Solstice",
+    "type": "Season"
+  }
+,
+  {
+    "date": "2030-01-06",
+    "name": "Ramadan begins (Tentative Date)",
+    "type": "Observance"
+  },
+  {
+    "date": "2030-02-05",
+    "name": "Eid al-Fitr (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2030-02-06",
+    "name": "Eid al-Fitr Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2030-02-07",
+    "name": "Eid al-Fitr Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2030-02-22",
+    "name": "Founding Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2030-03-11",
+    "name": "Flag Day",
+    "type": "Observance"
+  },
+  {
+    "date": "2030-03-20",
+    "name": "March Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2030-04-12",
+    "name": "Arafat Day (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2030-04-13",
+    "name": "Eid al-Adha (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2030-04-14",
+    "name": "Eid al-Adha Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2030-04-15",
+    "name": "Eid al-Adha Holiday (Tentative Date)",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2030-05-04",
+    "name": "Muharram (Muslim New Year) (Tentative Date)",
+    "type": "Observance"
+  },
+  {
+    "date": "2030-06-21",
+    "name": "June Solstice",
+    "type": "Season"
+  },
+  {
+    "date": "2030-09-23",
+    "name": "Saudi National Day",
+    "type": "National Holiday"
+  },
+  {
+    "date": "2030-09-23",
+    "name": "September Equinox",
+    "type": "Season"
+  },
+  {
+    "date": "2030-12-21",
+    "name": "December Solstice",
+    "type": "Season"
+  },
+  {
+    "date": "2030-12-26",
+    "name": "Ramadan begins (Tentative Date)",
+    "type": "Observance"
   }
 ]
