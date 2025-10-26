@@ -84,7 +84,9 @@ exports.createTask = async (req, res) => {
           task.assignedBy = {
             id: String(assignerUser._id),
             role: "user",
-            name: `${assignerUser.firstName || ""} ${assignerUser.lastName || ""}`.trim(),
+            name: `${assignerUser.firstName || ""} ${
+              assignerUser.lastName || ""
+            }`.trim(),
           };
         }
       }
@@ -115,11 +117,11 @@ exports.createTask = async (req, res) => {
       }
     }
 
-  await task.save();
-  const saved = await Task.findById(task._id)
-    .populate("child category")
-    .populate({ path: "parent", select: "firstName lastName email" });
-  res.status(201).json({ status: true, data: saved });
+    await task.save();
+    const saved = await Task.findById(task._id)
+      .populate("child category")
+      .populate({ path: "parent", select: "firstName lastName email" });
+    res.status(201).json({ status: true, data: saved });
   } catch (err) {
     console.error("createTask error", err);
     res.status(500).json({ status: false, message: "Server error" });
@@ -152,11 +154,13 @@ exports.markCompleteByChild = async (req, res) => {
         .status(400)
         .json({ status: false, message: "Already completed" });
 
-  task.completed = true;
-  task.completedAt = new Date();
-  await task.save();
-  const populated = await Task.findById(task._id).populate("child category").populate({ path: "parent", select: "firstName lastName email" });
-  res.json({ status: true, data: populated });
+    task.completed = true;
+    task.completedAt = new Date();
+    await task.save();
+    const populated = await Task.findById(task._id)
+      .populate("child category")
+      .populate({ path: "parent", select: "firstName lastName email" });
+    res.json({ status: true, data: populated });
   } catch (err) {
     console.error("markCompleteByChild error", err);
     res.status(500).json({ status: false, message: "Server error" });
@@ -235,6 +239,78 @@ exports.listTasksForChild = async (req, res) => {
       .populate({ path: "parent", select: "firstName lastName email" });
     res.json({ status: true, data: tasks });
   } catch (err) {
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+// dashboard counts for parent or child
+exports.dashboard = async (req, res) => {
+  try {
+    // If child token
+    if (req.user && req.user.role === "child") {
+      const childId = req.user.childId;
+      if (!childId)
+        return res
+          .status(401)
+          .json({
+            status: false,
+            message: "Unauthorized - child token required",
+          });
+
+      const todoCount = await Task.countDocuments({
+        child: childId,
+        completed: false,
+      });
+      const inProgressCount = await Task.countDocuments({
+        child: childId,
+        completed: true,
+        verified: false,
+      });
+      // Completed: verified by parent
+      const completedCount = await Task.countDocuments({
+        child: childId,
+        verified: true,
+      });
+
+      return res.json({
+        status: true,
+        data: {
+          todo: todoCount,
+          inProgress: inProgressCount,
+          completed: completedCount,
+        },
+      });
+    }
+
+    // Parent token
+    const parentId = req.user && req.user.userId;
+    if (!parentId)
+      return res.status(401).json({ status: false, message: "Unauthorized" });
+
+    const todoCount = await Task.countDocuments({
+      parent: parentId,
+      completed: false,
+    });
+    const inProgressCount = await Task.countDocuments({
+      parent: parentId,
+      completed: true,
+      verified: false,
+    });
+    const completedCount = await Task.countDocuments({
+      parent: parentId,
+      verified: true,
+    });
+
+    res.json({
+      status: true,
+      data: {
+        todo: todoCount,
+        inProgress: inProgressCount,
+        completed: completedCount,
+      },
+    });
+  } catch (err) {
+    console.error("dashboard error", err);
     res.status(500).json({ status: false, message: "Server error" });
   }
 };

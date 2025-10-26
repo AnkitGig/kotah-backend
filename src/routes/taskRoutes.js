@@ -14,5 +14,6 @@ router.post('/verify', auth, taskController.verifyAndAward);
 // child routes
 router.get('/child', auth, taskController.listTasksForChild);
 router.post('/complete', auth, taskController.markCompleteByChild);
+router.get('/dashboard', auth, taskController.dashboard);  
 
 module.exports = router;
